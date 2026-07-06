@@ -1,3 +1,3 @@
 FILE MASTER PRAKTIKUM APS 2025 (ENGLISH VERSION)
 username : owner
-passowrd : aps12345
+passowrd : aps123
