@@ -2,6 +2,14 @@ from django.db import models
 from django.contrib.auth.models import User
 
 # Create your models here.
+
+PARTNER_STATUS_CHOICES = [
+    ("Pending", "Pending"),
+    ("Active", "Active"),
+    ("Rejected", "Rejected"),
+    ("Inactive", "Inactive"),
+]
+
 class Partner(models.Model):
     partner_id = models.AutoField(primary_key=True)
     partner_name = models.CharField(max_length=100)
@@ -10,9 +18,11 @@ class Partner(models.Model):
     start_date = models.DateField()
     contract_duration = models.PositiveIntegerField()
     land_area = models.PositiveIntegerField(null=True)
-    partner_status = models.BooleanField(default=None, null=True)
-    min_quantity = models.PositiveIntegerField()
-    email = models.EmailField()
+    partner_status = models.CharField(max_length=20, choices=PARTNER_STATUS_CHOICES, default="Pending")
+    # min_quantity = models.PositiveIntegerField()
+    email = models.EmailField() #ada tp gamuncul di data table, aneh
+    dokumen = models.FileField() #new
+    inspection_notes = models.TextField(blank=True, null=True) #new
 
     def __str__(self):
         return str(self.partner_name)
@@ -20,8 +30,8 @@ class Partner(models.Model):
 
 class Grade(models.Model):
     grade_id = models.AutoField(primary_key=True)
-    grade_name = models.CharField(max_length=100)
-    grade_description = models.TextField(blank=True, null=True)
+    grade_name = models.CharField(max_length=100) #Grade A, Grade B, Grade C, Processed. Ada grade discard apakah perlu dimasukkan?
+    grade_description = models.TextField(blank=True, null=True) #Bebas keterangan dari admin
 
     def __str__(self):
         return str(self.grade_name)
@@ -29,10 +39,11 @@ class Grade(models.Model):
 
 class Commodity(models.Model):
     commodity_id = models.AutoField(primary_key=True)
+    commodity_name = models.CharField(max_length=100) #Crystal Guava
     grade_id = models.ForeignKey(Grade, on_delete=models.CASCADE)
-    commodity_name = models.CharField(max_length=100)
-    purchase_price = models.IntegerField()
-    selling_price = models.IntegerField()
+    shelf_life = models.PositiveIntegerField() #dalam hari
+    purchase_price = models.PositiveBigIntegerField() #per kg
+    selling_price = models.PositiveBigIntegerField() #per kg
 
     def __str__(self):
         return f"{self.commodity_name} - {self.grade_id.grade_name}"
@@ -40,9 +51,10 @@ class Commodity(models.Model):
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
-    product_name = models.CharField(max_length=100)
-    product_unit = models.CharField(max_length=100)
-    product_price = models.PositiveIntegerField()
+    product_name = models.CharField(max_length=100) #Guava Pastry, Rujak Telang
+    selling_price = models.PositiveIntegerField() #Maksudnya harga jual produk
+    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE) #Nama commodity yang dibutuhkan (satu aja)
+    commodity_quantity = models.DecimalField(max_digits=5, decimal_places=2) #Jumlah comomodity yang diperlukan untuk buat satu unit produk (kg)
 
     def __str__(self):
         return str(self.product_name)
@@ -50,8 +62,8 @@ class Product(models.Model):
 
 class PartnerHarvest(models.Model):
     partner_harvest_id = models.AutoField(primary_key=True)
-    partner_id = models.ForeignKey(Partner, on_delete=models.CASCADE)
-    harvest_date = models.DateField()
+    partner_id = models.ForeignKey(Partner, on_delete=models.CASCADE) #Nama partner yang panen dengan status active
+    harvest_date = models.DateField()  
 
     def __str__(self):
         return str(self.partner_id.partner_name)
@@ -59,14 +71,12 @@ class PartnerHarvest(models.Model):
 
 class PartnerHarvestDetail(models.Model):
     partner_harvest_detail_id = models.AutoField(primary_key=True)
-    partner_harvest_id = models.ForeignKey(PartnerHarvest, on_delete=models.CASCADE)
-    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE)
-    batch = models.PositiveIntegerField()
-    expiry_date = models.DateField()
-    quantity = models.PositiveIntegerField()
+    partner_harvest_id = models.ForeignKey(PartnerHarvest, on_delete=models.CASCADE) 
+    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE) #hasil dari harvest nya, misalnya 1 harvest_id ada 3 komoditas, yaudah berarti nanti dari 1 harvest_id ada 3 record detail harvest
+    quantity = models.DecimalField(max_digits=10, decimal_places=2) #hasilnya berapa dari panennya (kg)
 
     def __str__(self):
-        return "{} - {}".format(self.partner_harvest_id, self.batch)
+        return "{} - {}".format(self.partner_harvest_id)
 
 
 class LocalHarvest(models.Model):
@@ -81,18 +91,17 @@ class LocalHarvestDetail(models.Model):
     local_harvest_detail_id = models.AutoField(primary_key=True)
     local_harvest_id = models.ForeignKey(LocalHarvest, on_delete=models.CASCADE)
     commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE)
-    batch = models.PositiveIntegerField()
-    expiry_date = models.DateField()
-    quantity = models.PositiveIntegerField(null=True)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
-        return "{} - {}".format(self.local_harvest_id, self.batch)
+        return "{} - {}".format(self.local_harvest_id)
 
 
 class Market(models.Model):
     market_id = models.AutoField(primary_key=True)
-    market_name = models.CharField(max_length=100)
-    market_address = models.TextField(null=True, blank=True)
+    market_name = models.CharField(max_length=100) #kita jual kesiapa (contoh: superindo)
+    market_address = models.TextField()
+    phone_number = models.PositiveBigIntegerField()
 
     def __str__(self):
         return str(self.market_name)
@@ -106,17 +115,19 @@ class Sale(models.Model):
     def __str__(self):
         return str(self.market_id)
 
-
-class SaleDetail(models.Model):
-    sale_detail_id = models.AutoField(primary_key=True)
+class SaleCommodity(models.Model):
+    sale_commodity_id = models.AutoField(primary_key=True)
     sale_id = models.ForeignKey(Sale, on_delete=models.CASCADE)
-    product_id = models.ForeignKey(Product, null=True, on_delete=models.CASCADE)
-    commodity_id = models.ForeignKey(Commodity, null=True, on_delete=models.CASCADE)
-    commodity_quantity = models.PositiveIntegerField(null=True)
-    product_quantity = models.PositiveIntegerField(null=True)
+    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE)
+    grade_id = models.ForeignKey(Grade, on_delete=models.CASCADE)
+    commodity_quantity = models.PositiveIntegerField()
 
-    def __str__(self):
-        return str(self.sale_id)
+
+class SaleProduct(models.Model):
+    sale_product_id = models.AutoField(primary_key=True)
+    sale_id = models.ForeignKey(Sale, on_delete=models.CASCADE)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_quantity = models.PositiveIntegerField()
 
 
 class Production(models.Model):
@@ -126,35 +137,76 @@ class Production(models.Model):
     def __str__(self):
         return str(self.date)
 
+PRODUCTION_STATUS_CHOICES = [
+    ("Processing", "Processing"),
+    ("Completed", "Completed"),
+    ("Cancelled", "Cancelled"),
+]
 
 class ProductionDetail(models.Model):
     production_detail_id = models.AutoField(primary_key=True)
-    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
     production_id = models.ForeignKey(Production, on_delete=models.CASCADE)
-    product_quantity = models.PositiveIntegerField()
-    product_status = models.CharField(max_length=100, null=True)
+    product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
+    product_quantity = models.PositiveIntegerField() #mau produksi berapa produk? nanti langsung liat feasible atau engga dengan cara itung dari programnya pakaah komoditasyang kita punya sekarang mencukupi untuk membuat produk ini, kalau mau enak nanti di UI nya dikasi aja yang bisa di produksi dengan jumlah komoditas sekarang berapa
+    status = models.CharField(max_length=20, choices=PRODUCTION_STATUS_CHOICES, default="Processing")
 
     def __str__(self):
-        return "{} - {}".format(self.product_id, self.product_status)
+        return "{} - {}".format(self.production_id, self.product_id)
 
 
-class CostType(models.Model):
-    cost_type_id = models.AutoField(primary_key=True)
-    cost_type_name = models.CharField(max_length=100)
+SOURCE_CHOICES = [
+    ("Partner", "Partner"),
+    ("Local", "Local"),
+]
+
+class InventoryBatch(models.Model):
+    inventory_batch_id = models.AutoField(primary_key=True)
+    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE)
+    harvest_date = models.DateField()
+    expired_date = models.DateField()
+    initial_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    remaining_quantity = models.DecimalField(max_digits=10, decimal_places=2)
+    source = models.CharField(
+        max_length=10,
+        choices=SOURCE_CHOICES
+    )
 
     def __str__(self):
-        return str(self.cost_type_name)
+        return f"{self.commodity_id} ({self.remaining_quantity} kg)"
 
 
-class Cost(models.Model):
-    cost_id = models.AutoField(primary_key=True)
-    cost_type_id = models.ForeignKey(CostType, on_delete=models.CASCADE)
+CATEGORY_TYPE = [
+    ("Income","Income"),
+    ("Expense","Expense"),
+]
+
+class TransactionCategory(models.Model):
+    category_id = models.AutoField(primary_key=True)
+    category_name = models.CharField(max_length=100)
+    type = models.CharField(max_length=20, choices=CATEGORY_TYPE)
+
+    def __str__(self):
+        return self.category_name
+    
+
+REFERENCE_TYPE = [
+    ("SaleProduct", "Sale Product"),
+    ("SaleCommodity", "Sale Commodity"),
+    ("PartnerHarvest", "Partner Harvest"),
+    ("Cost", "Cost"),
+]
+
+class Transaction(models.Model):
+    transaction_id = models.AutoField(primary_key=True)
+    category_id = models.ForeignKey(TransactionCategory, on_delete=models.CASCADE)
     date = models.DateField()
-    cost_name = models.CharField(max_length=100)
-    cost_amount = models.PositiveIntegerField()
+    description = models.CharField(max_length=200)
+    amount = models.PositiveIntegerField()
+    reference_type = models.CharField(max_length=30, choices=REFERENCE_TYPE)
+    reference_id = models.PositiveIntegerField()
 
     def __str__(self):
-        return "{} - {}".format(self.cost_type_id, self.cost_name)
+        return f"{self.reference_type} #{self.reference_id} - Rp{self.amount}"
 
 
 class ActivityLog(models.Model):
