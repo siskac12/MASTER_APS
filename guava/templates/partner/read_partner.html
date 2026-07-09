@@ -23,13 +23,16 @@
                             <thead class="table-light">
                                 <tr>
                                     <th>No</th>
-                                    <th>partner name</th>
+                                    <th>Partner Name</th>
                                     <th>Address</th> 
                                     <th>Contact</th>
                                     <th>Start Date Partner</th>
                                     <th>Duration Contract</th>
                                     <th>Land Area</th>
-                                    <th>status partner</th>
+                                    <th>Status Partner</th>
+                                    <th>Email</th>
+                                    <th>Document</th>
+                                    <th>Inspection Notes</th>
                                     {% if is_owner or is_admin %}
                                     <th class="text-center">Action</th>
                                     {% endif %}
@@ -46,12 +49,17 @@
                                     <td>{{ item.start_date }}</td>
                                     <td>{{ item.contract_duration }}</td>
                                     <td>{{ item.land_area }}</td>
+                                    <td>{{ item.partner_status }}</td>
+                                    <td>{{ item.email }}</td>
                                     <td>
-                                        {% if item.partner_status %}
-                                        Active
-                                        {% else %}
-                                        Not Active
+                                        {% if item.dokumen %}
+                                            <a href="{{ item.dokumen.url }}" target="_blank">
+                                                {{ item.dokumen.name|cut:"dokumen/" }}
+                                            </a>
                                         {% endif %}
+                                    </td>
+                                    <td>{{ item.inspection_notes }}</td>
+                                                                
                                     </td>
                                     {% if is_owner or is_admin %}
                                     <td>           

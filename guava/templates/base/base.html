@@ -72,25 +72,24 @@
     $(document).ready(function() {
       $('#tabel').DataTable();
     });
- 
+
     $(document).ready(function () {
       $('#datacosttype').DataTable();
     });
 
-  
     $(document).ready(function () {
-      $('#partnerharvestdata').DataTable();
+      $('#datapartner_harvest').DataTable();
     });
+
     $(document).ready(function () {
       $('#localharvestdata').DataTable();
     });
 
     $(document).ready(function () {
-      $('#datapartner_weight').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#datalocal_weight').DataTable();
+      var invTable = $('#datainventory').DataTable();
+      $('#sourceFilter').on('change', function () {
+        invTable.column(7).search(this.value).draw();
+      });
     });
 
     $(document).ready(function () {

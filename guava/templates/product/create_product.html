@@ -26,19 +26,30 @@
                     </div>
 
                     <div class="form-group row">
-                        <label class="col-sm-3 col-form-label">Product Unit</label>
+                        <label class="col-sm-3 col-form-label">Product Price</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="text" name="product_unit" placeholder="Product Unit" required>
+                            <input class="form-control" type="text" name="selling_price" placeholder="Product Price" required>
                         </div>
                     </div>
 
                     <div class="form-group row">
-                        <label class="col-sm-3 col-form-label">Product Price</label>
+                        <label class="col-sm-3 col-form-label">Commodity</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="text" name="product_price" placeholder="Product Price" required>
+                            <select name="commodity_name" class="form-control">
+                                {% for i in commodity_obj %}
+                                <option value="{{i.commodity_name}}">{{i.commodity_name}}</option>
+                                {% endfor %}
+                            </select>
                         </div>
                     </div>
- 
+
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">Commodity Quantity</label>
+                        <div class="col-sm-9">
+                            <input class="form-control" type="text" name="commodity_quantity" placeholder="Commodity Quantity (kg)" required>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn btn-success btn-icon-text">
                         <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit </button>
                 </form>

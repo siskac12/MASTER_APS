@@ -16,7 +16,7 @@
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
-                    <h1 class="card-title">market</h1>
+                    <h1 class="card-title">Market</h1>
 
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Market Name</label>
@@ -29,6 +29,13 @@
                         <label class="col-sm-3 col-form-label">Market Address</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="text" name="market_address" placeholder="Market Address" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">Phone Number</label>
+                        <div class="col-sm-9">
+                            <input class="form-control" type="text" name="phone_number" placeholder="Phone Number" required>
                         </div>
                     </div>
 

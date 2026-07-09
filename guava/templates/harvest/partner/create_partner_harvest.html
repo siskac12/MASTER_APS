@@ -2,21 +2,12 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Create Partner Harvest</h1>
+    <h1 class="page-title">Create Data Partner Harvest</h1>
     <nav aria-label="breadcrumb">
-        <div class="mr2">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item active" aria-current="page">
-                    <a class="text-muted" href="{% url 'read_partner_harvest' %}">Data Partner Harvest</a>
-                </li>
-                <li class="breadcrumb-item active" aria-current="page">
-                    <a class="text-muted" href="{% url 'read_weight_partner' %}">Accumulation</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'create_partner_harvest' %}">Create Partner Harvest</a>
-                </li>
-            </ol>
-        </div>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_partner_harvest' %}">Data Partner Harvest</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'create_partner_harvest' %}">Create Partner Harvest</a></li>
+        </ol>
     </nav>
 </div>
 
@@ -26,6 +17,7 @@
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
+                    <h1 class="card-title">Partner Harvest</h1>
                     <div class="form-group row">
                         <label for="partner_name" class="col-sm-3 col-form-label">Partner Name</label>
                         <div class="col-sm-9">
@@ -46,13 +38,15 @@
 
                     <div class="row mb-4">
                         <div class="col-auto">
-                            <button type="button" class="btn btn-inverse-success" onclick="addpartnerharvest()">Add</button>
+                            <button type="button" class="btn btn-inverse-success btn-icon-text btn-sm" onclick="addpartnerharvest()">
+                                <i class="mdi mdi-plus btn-icon-prepend"></i> Add Detail
+                            </button>
                         </div>
                     </div>
 
                     <div id="adddetail">
-                        <div class="detail-row">
-                            <h3 class="card-title">Detail Partner Harvest 1</h3>
+                        <div class="detail-row border-top pt-3 mb-4">
+                            <h3 class="card-title">Partner Harvest Detail 1</h3>
                             <div class="form-group row">
                                 <label for="commodity" class="col-sm-3 col-form-label">Commodity</label>
                                 <div class="col-sm-9">
@@ -64,31 +58,20 @@
                                 </div>
                             </div>
                             <div class="form-group row">
-                                <label for="batch" class="col-sm-3 col-form-label">Batch</label>
-                                <div class="col-sm-9">
-                                    <input type="number" name="batch" class="form-control" placeholder="Batch" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label for="expiry_date" class="col-sm-3 col-form-label">Expiry Date</label>
-                                <div class="col-sm-9">
-                                    <input type="date" name="expiry_date" class="form-control" placeholder="expiry_date" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
                                 <label for="quantity" class="col-sm-3 col-form-label">Quantity</label>
                                 <div class="col-sm-9">
-                                    <input type="number" name="quantity" class="form-control commodity" placeholder="quantity" required>
+                                    <input type="number" step="0.01" name="quantity" class="form-control" placeholder="Quantity (kg)" required>
                                 </div>
                             </div>
 
-                            <button class="btn btn-inverse-danger" type="button" onclick="deleterow(this)">Delete</button>
+                            <button class="btn btn-inverse-danger btn-icon-text btn-sm" type="button" onclick="deleterow(this)">
+                                <i class="mdi mdi-close btn-icon-prepend"></i> Delete Detail
+                            </button>
                         </div>
                     </div>
-                    <br>
-                    <button class="btn btn-primary" type="submit">Submit</button>
+                    <button type="submit" class="btn btn-success btn-icon-text">
+                        <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit
+                    </button>
                 </form>
             </div>
         </div>
@@ -100,11 +83,11 @@
         const rows = document.querySelectorAll('#adddetail .detail-row');
         const angka = rows.length + 1;
         const baris = document.createElement('div');
-        baris.className = 'detail-row mb-4'; // Add margin bottom for spacing
+        baris.className = 'detail-row border-top pt-3 mb-4';
         baris.innerHTML = `
-            <h3 class="card-title">Detail Partner Harvest ${angka}</h3>
+            <h3 class="card-title">Partner Harvest Detail ${angka}</h3>
             <div class="form-group row">
-                <label for="commodity" class="col-sm-3 col-form-label">commodity</label>
+                <label class="col-sm-3 col-form-label">Commodity</label>
                 <div class="col-sm-9">
                     <select class="form-control" name="commodity" required>
                         {% for item in all_commodities %}
@@ -114,25 +97,14 @@
                 </div>
             </div>
             <div class="form-group row">
-                <label for="batch" class="col-sm-3 col-form-label">Batch</label>
+                <label class="col-sm-3 col-form-label">Quantity</label>
                 <div class="col-sm-9">
-                    <input type="number" name="batch" class="form-control" placeholder="Batch" required>
+                    <input type="number" step="0.01" name="quantity" class="form-control" placeholder="Quantity (kg)" required>
                 </div>
             </div>
-            <div class="form-group row">
-                <label for="expiry_date" class="col-sm-3 col-form-label">Expiry Date</label>
-                <div class="col-sm-9">
-                    <input type="date" name="expiry_date" class="form-control" placeholder="expiry_date" required>
-                </div>
-            </div>
-            <div class="form-group row">
-                <label for="quantity" class="col-sm-3 col-form-label">quantity</label>
-                <div class="col-sm-9">
-                    <input type="number" name="quantity" class="form-control commodity" placeholder="Quantity" required>
-                </div>
-            </div>
-            <button class="btn btn-inverse-danger" type="button" onclick="deleterow(this)">Delete</button>
-            <br>
+            <button class="btn btn-inverse-danger btn-icon-text btn-sm" type="button" onclick="deleterow(this)">
+                <i class="mdi mdi-close btn-icon-prepend"></i> Delete Detail
+            </button>
         `;
         document.getElementById('adddetail').appendChild(baris);
         updateRowNumbers();
@@ -147,7 +119,7 @@
         const rows = document.querySelectorAll('#adddetail .detail-row');
         rows.forEach((row, index) => {
             const title = row.querySelector('h3');
-            title.textContent = `Detail Partner Harvest ${index + 1}`;
+            title.textContent = `Partner Harvest Detail ${index + 1}`;
         });
     }
 </script>

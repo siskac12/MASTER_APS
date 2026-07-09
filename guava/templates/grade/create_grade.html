@@ -2,7 +2,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Add Data</h1>
+    <h1 class="page-title">Create Data Grade</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'read_grade' %}">Data Grade</a></li>
@@ -16,6 +16,7 @@
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
+                    <h1 class="card-title">Grade</h1>                    
                     <div class="form-group row">
             
                         <label for="grade_name" class="col-sm-3 col-form-label">Grade Name</label>
@@ -32,7 +33,9 @@
                         </div>
                     
                     </div>
-                    <button type="submit" class="btn btn-primary mr-2" >Submit</button>
+
+                    <button type="submit" class="btn btn-success btn-icon-text">
+                        <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit </button>
                 </form>
             </div>
         </div>

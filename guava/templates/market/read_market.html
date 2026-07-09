@@ -22,9 +22,9 @@
                     <thead class="table-light">
                         <tr>
                             <th class="text-center">No</th>
-                            <th class="text-center">ID market</th>
                             <th class="text-center">Market Name</th>
                             <th class="text-center">Market Address</th>
+                            <th class="text-center">Phone Number</th>
                             {% if is_owner %}
                             <th class="text-center">Action</th>
                             {% endif %}
@@ -34,9 +34,9 @@
                         <tr>
                             {% for i in market_obj %}
                             <td>{{ forloop.counter }}</td>
-                            <td>{{ i.market_id }}</td>
                             <td>{{ i.market_name }}</td>
                             <td>{{ i.market_address }}</td>
+                            <td>{{ i.phone_number }}</td>
                             {% if is_owner %}
                             <td class="text-center">
                                 <a href="{% url 'update_market' i.market_id %}"><button class="btn-inverse-warning btn-icon-text btn-sm mr-2">

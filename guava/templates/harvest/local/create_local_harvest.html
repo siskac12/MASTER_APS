@@ -2,21 +2,12 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Create Local harvest</h1>
+    <h1 class="page-title">Create Data Local Harvest</h1>
     <nav aria-label="breadcrumb">
-        <div class="mr2">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item active" aria-current="page">
-                    <a class="text-muted" href="{% url 'read_local_harvest' %}">Data Local harvest</a>
-                </li>
-                <li class="breadcrumb-item active" aria-current="page">
-                    <a class="text-muted" href="{% url 'read_weight_local' %}">Accumulation</a>
-                </li>
-                <li class="breadcrumb-item">
-                    <a href="{% url 'create_local_harvest' %}">Create Local harvest</a>
-                </li>
-            </ol>
-        </div>
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_local_harvest' %}">Data Local Harvest</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'create_local_harvest' %}">Create Local Harvest</a></li>
+        </ol>
     </nav>
 </div>
 
@@ -26,25 +17,28 @@
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
+                    <h1 class="card-title">Local Harvest</h1>
                     <div class="form-group row">
-                        <label for="harvest_date" class="col-sm-3 col-form-label">harvest</label>
+                        <label for="harvest_date" class="col-sm-3 col-form-label">Harvest Date</label>
                         <div class="col-sm-9">
                             <input type="date" class="form-control" name="harvest_date" id="harvest_date" required>
                         </div>
                     </div>
                     <div class="row mb-4">
                         <div class="col-auto">
-                            <button type="button" class="btn btn-inverse-success" onclick="addlocal_harvest()">add</button>
+                            <button type="button" class="btn btn-inverse-success btn-icon-text btn-sm" onclick="addlocal_harvest()">
+                                <i class="mdi mdi-plus btn-icon-prepend"></i> Add Detail
+                            </button>
                         </div>
                     </div>
                     <div id="adddetail">
-                        <div class="detail-row mb-4">
-                            <h3 class="card-title">Local harvest Detail 1</h3>
+                        <div class="detail-row border-top pt-3 mb-4">
+                            <h3 class="card-title">Local Harvest Detail 1</h3>
                             <div class="form-group row">
-                                <label for="commodity" class="col-sm-3 col-form-label">commodity</label>
+                                <label for="commodity" class="col-sm-3 col-form-label">Commodity</label>
                                 <div class="col-sm-9">
                                     <select class="form-control commodity" name="commodity" id="commodity">
-                                        {% for item in allcommodity %}
+                                        {% for item in all_commodities %}
                                         <option value="{{ item.commodity_id }}">{{ item }}</option>
                                         {% endfor %}
                                     </select>
@@ -52,29 +46,19 @@
                             </div>
 
                             <div class="form-group row">
-                                <label for="batch" class="col-sm-3 col-form-label">Batch</label>
+                                <label for="quantity" class="col-sm-3 col-form-label">Quantity</label>
                                 <div class="col-sm-9">
-                                    <input class="form-control" type="number" name="batch" id="batch" placeholder="Batch" required>
+                                    <input class="form-control" type="number" step="0.01" name="quantity" id="quantity" placeholder="Quantity (kg)" required>
                                 </div>
                             </div>
-
-                            <div class="form-group row">
-                                <label for="expiry_date" class="col-sm-3 col-form-label">expiry date</label>
-                                <div class="col-sm-9">
-                                    <input class="form-control" type="date" name="expiry_date" id="expiry_date"  required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label for="quantity" class="col-sm-3 col-form-label">quantity</label>
-                                <div class="col-sm-9">
-                                    <input class="form-control" type="number" name="quantity" id="quantity" placeholder="quantity" required>
-                                </div>
-                            </div>
-                            <button class="btn btn-inverse-danger" type="button" onclick="deleterow(this)">Delete</button>
+                            <button class="btn btn-inverse-danger btn-icon-text btn-sm" type="button" onclick="deleterow(this)">
+                                <i class="mdi mdi-close btn-icon-prepend"></i> Delete Detail
+                            </button>
                         </div>
                     </div>
-                    <button class="btn btn-primary" type="submit">Submit</button>
+                    <button type="submit" class="btn btn-success btn-icon-text">
+                        <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit
+                    </button>
                 </form>
             </div>
         </div>
@@ -86,11 +70,11 @@
         const rows = document.querySelectorAll('#adddetail .detail-row');
         const angka = rows.length + 1;
         const baris = document.createElement('div');
-        baris.className = 'detail-row mb-4';
+        baris.className = 'detail-row border-top pt-3 mb-4';
         baris.innerHTML = `
-            <h3 class="card-title">Local harvest Detail ${angka}</h3>
+            <h3 class="card-title">Local Harvest Detail ${angka}</h3>
             <div class="form-group row">
-                <label for="commodity" class="col-sm-3 col-form-label">commodity</label>
+                <label class="col-sm-3 col-form-label">Commodity</label>
                 <div class="col-sm-9">
                     <select class="form-control commodity" name="commodity" id="commodity">
                         {% for item in all_commodities %}
@@ -99,28 +83,15 @@
                     </select>
                 </div>
             </div>
-
             <div class="form-group row">
-                <label for="batch" class="col-sm-3 col-form-label">Batch</label>
+                <label class="col-sm-3 col-form-label">Quantity</label>
                 <div class="col-sm-9">
-                    <input class="form-control" type="number" name="batch" id="batch" placeholder="Batch" required>
+                    <input class="form-control" type="number" step="0.01" name="quantity" id="quantity" placeholder="Quantity (kg)" required>
                 </div>
             </div>
-
-            <div class="form-group row">
-                <label for="expiry_date" class="col-sm-3 col-form-label">expiry date</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="date" name="expiry_date" id="expiry_date" required>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <label for="quantity" class="col-sm-3 col-form-label">quantity</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" name="quantity" id="quantity" placeholder="quantity" required>
-                </div>
-            </div>
-            <button class="btn btn-inverse-danger" type="button" onclick="deleterow(this)">Delete</button>
+            <button class="btn btn-inverse-danger btn-icon-text btn-sm" type="button" onclick="deleterow(this)">
+                <i class="mdi mdi-close btn-icon-prepend"></i> Delete Detail
+            </button>
         `;
         document.getElementById('adddetail').appendChild(baris);
         updateRowNumbers();
@@ -135,7 +106,7 @@
         const rows = document.querySelectorAll('#adddetail .detail-row');
         rows.forEach((row, index) => {
             const title = row.querySelector('h3');
-            title.textContent = `Local harvest Detail${index + 1}`;
+            title.textContent = `Local Harvest Detail ${index + 1}`;
         });
     }
 </script>
