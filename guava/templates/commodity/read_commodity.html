@@ -22,7 +22,6 @@
                     <thead class="table-light">
                         <tr>
                             <th class="text-center">No</th>
-                            <th class="text-center">ID commodity</th>
                             <th class="text-center">Commodity Name</th>
                             <th class="text-center">Grade</th>
                             <th class="text-center">Purchasing Price</th>
@@ -36,7 +35,6 @@
                         <tr>
                             {% for i in commodity_obj %}
                             <td>{{ forloop.counter }}</td>
-                            <td>{{ i.commodity_id }}</td>
                             <td>{{ i.commodity_name }}</td>
                             <td class="text-center">{{ i.grade_id }}</td>
                             <td class="text-right">Rp{{ i.purchase_price }}</td>

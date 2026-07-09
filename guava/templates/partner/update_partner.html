@@ -3,75 +3,228 @@
 {% block content %}
 
 <div class="page-header">
+    <h1 class="page-title">Update Data Partner</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item Active " aria-current="page" ><a class="text-muted" href="{% url 'read_partner' %}">Data partner</a></li>
-          <li class="breadcrumb-item " ><a  href="">Update partner</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_partner' %}">Data Partner</a></li>
+            <li class="breadcrumb-item"><a href="{%  url 'update_partner' item.partner_id % }">Update partner</a></li>
         </ol>
-      </nav>
+    </nav>
 </div>
 
-<div class="col-12 grid-margin stretch-card">
-    <div class="card">
-        <div class="card-body">
-            <h3 class="card-title">Update Data</h3>
-            <form class="form-sample" method="post">
-                {% csrf_token %}
-                <div class="form-group row">
-                    <label for="partner_name"  class="col-sm-3 col-form-label">partner name</label>
-                    <div class="col-sm-9">
-                        <input type="text" name="partner_name" id="partner_name" class="form-control" placeholder="Nama partner" value="{{partner_obj.partner_name}}" required>
-                    </div>
+<div class="card">
+    <div class="card-body">
+
+        <form method="POST" enctype="multipart/form-data">
+
+            {% csrf_token %}
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Partner Name
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="partner_name"
+                        value="{{ partner_obj.partner_name }}"
+                        required>
                 </div>
-        
-                <div class="form-group row">
-                    <label for="partner_address"  class="col-sm-3 col-form-label">Partner Address</label>
-                    <div class="col-sm-9">
-                        <input type="text" name="partner_address" id="partner_address" placeholder="Alamat partner" class="form-control" value="{{partner_obj.partner_address}}" name required>
-                    </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Partner Address
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="text"
+                        class="form-control"
+                        name="partner_address"
+                        value="{{ partner_obj.partner_address|default_if_none:'' }}">
                 </div>
-        
-                <div class="form-group row">
-                    <label for="partner_phone"  class="col-sm-3 col-form-label">Partner Contact</label>
-                    <div class="col-sm-9">
-                        <input  type="number" name="partner_phone" id="partner_phone" placeholder="Kontak partner" class="form-control" value="{{partner_obj.partner_phone}}" required>
-                    </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Partner Phone
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="number"
+                        class="form-control"
+                        name="partner_phone"
+                        value="{{ partner_obj.partner_phone }}"
+                        required>
                 </div>
-        
-                <div class="form-group row">
-                    <label for="start_date"  class="col-sm-3 col-form-label">Start Date Partner</label>
-                    <div class="col-sm-9">
-                        <input type="date" name="start_date" id="start_date"  class="form-control" value="{{start_date}}" name required>
-                    </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Email
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="email"
+                        class="form-control"
+                        name="email"
+                        value="{{ partner_obj.email }}"
+                        required>
                 </div>
-        
-                <div class="form-group row">
-                    <label for="contract_duration"  class="col-sm-3 col-form-label">Durasi Kontrak</label>
-                    <div class="col-sm-9">
-                        <input type="number" name="contract_duration" id="contract_duration" value="{{partner_obj.contract_duration}}" placeholder="Durasi Kontrak(tahun)" class="form-control" required>
-                    </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Start Date
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="date"
+                        class="form-control"
+                        name="start_date"
+                        value="{{ start_date }}"
+                        required>
                 </div>
-        
-                <div class="form-group row">
-                    <label for="land_area"  class="col-sm-3 col-form-label">Land Area(m2)</label>
-                    <div class="col-sm-9">
-                        <input type="number" name="land_area" id="land_area" class="form-control" value="{{partner_obj.land_area}}"  placeholder="Luas Lahan (hektare)" required>
-                    </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Contract Duration (Months)
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="number"
+                        class="form-control"
+                        name="contract_duration"
+                        value="{{ partner_obj.contract_duration }}"
+                        required>
                 </div>
-        
-                <div class="form-group row">
-                    <label for="partner_status" class="col-sm-3 col-form-label">Partner Status</label>
-                    <div class="col-sm-9">
-                        <select class="form-control" name="partner_status" id="partner_status" required>
-                            <option value="Active" {% if statuspartner == 'Active' %} selected {% endif %}>Active</option>
-                            <option value="Not Active" {% if statuspartner == 'Not Active' %} selected {% endif %}>Not Active</option>
-                        </select>
-                    </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Land Area (m²)
+                </label>
+
+                <div class="col-sm-9">
+                    <input
+                        type="number"
+                        class="form-control"
+                        name="land_area"
+                        value="{{ partner_obj.land_area|default_if_none:'' }}">
                 </div>
-                
-                <button type="submit"class="btn btn-primary mr-2">Submit</button>
-            </form>
-        </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Partner Status
+                </label>
+
+                <div class="col-sm-9">
+
+                    <select
+                        class="form-control"
+                        name="partner_status"
+                        required>
+
+                        <option value="Pending"
+                            {% if partner_obj.partner_status == "Pending" %}
+                                selected
+                            {% endif %}>
+                            Pending
+                        </option>
+
+                        <option value="Active"
+                            {% if partner_obj.partner_status == "Active" %}
+                                selected
+                            {% endif %}>
+                            Active
+                        </option>
+
+                        <option value="Rejected"
+                            {% if partner_obj.partner_status == "Rejected" %}
+                                selected
+                            {% endif %}>
+                            Rejected
+                        </option>
+
+                        <option value="Inactive"
+                            {% if partner_obj.partner_status == "Inactive" %}
+                                selected
+                            {% endif %}>
+                            Inactive
+                        </option>
+
+                    </select>
+
+                </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Inspection Notes
+                </label>
+
+                <div class="col-sm-9">
+                    <textarea
+                        class="form-control"
+                        rows="4"
+                        name="inspection_notes">{{ partner_obj.inspection_notes }}</textarea>
+                </div>
+            </div>
+
+
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">
+                    Document
+                </label>
+
+                <div class="col-sm-9">
+
+                    {% if partner_obj.dokumen %}
+                        <p>
+                            Current File :
+                            <a href="{{ partner_obj.dokumen.url }}" target="_blank">
+                                {{ partner_obj.dokumen.name }}
+                            </a>
+                        </p>
+                    {% endif %}
+
+                    <input
+                        type="file"
+                        class="form-control"
+                        name="dokumen">
+
+                </div>
+            </div>
+
+
+
+            <button type="submit" class="btn btn-success btn-icon-text">
+                <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit </button>
+
+            <a href="{% url 'read_partner' %}" class="btn btn-secondary">
+                Cancel
+            </a>
+
+        </form>
+
     </div>
 </div>
+
 {% endblock %}

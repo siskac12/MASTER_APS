@@ -19,10 +19,9 @@ class Partner(models.Model):
     contract_duration = models.PositiveIntegerField()
     land_area = models.PositiveIntegerField(null=True)
     partner_status = models.CharField(max_length=20, choices=PARTNER_STATUS_CHOICES, default="Pending")
-    # min_quantity = models.PositiveIntegerField()
-    email = models.EmailField() #ada tp gamuncul di data table, aneh
-    dokumen = models.FileField() #new
-    inspection_notes = models.TextField(blank=True, null=True) #new
+    email = models.EmailField() 
+    dokumen = models.FileField() 
+    inspection_notes = models.TextField(blank=True, null=True) 
 
     def __str__(self):
         return str(self.partner_name)

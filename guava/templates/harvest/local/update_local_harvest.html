@@ -37,28 +37,10 @@
                     </div>
                 </div>
 
-               
-                <div class="form-group row">
-                    <label for="batch" class="col-sm-3 col-form-label">Batch</label>
-                    <div class="col-sm-9">
-                        <input class="form-control" type="number" name="batch" id="batch" value="{{detail_obj.batch}}" placeholder="batch" required>
-                    </div>
-                </div>
-                
-
-                
-
-                <div class="form-group row">
-                    <label class="col-sm-3 col-form-label" for="expiry_date">expiry_date</label>
-                    <div class="col-sm-9">
-                        <input class="form-control" type="date" name="expiry_date" id="expiry_date" value="{{expiry_date}}" placeholder="expiry_date" required>
-                    </div>
-                </div>
-                
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label"  for="quantity">quantity</label>
                     <div class="col-sm-9">
-                        <input class="form-control" type="number" name="quantity" id="quantity" value="{{detail_obj.quantity}}" placeholder="quantity" required>
+                        <input class="form-control" type="number" step="0.01" name="quantity" id="quantity" value="{{detail_obj.quantity}}" placeholder="quantity" required>
                     </div>
                 </div>
     

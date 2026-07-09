@@ -5,8 +5,8 @@
     <h1 class="page-title">Update Data Market</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_market' %}">Data market</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'create_market' %}">Create marginarket</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_market' %}">Data Market</a></li>
+            <li class="breadcrumb-item"><a href="{%  url 'update_market' item.market_id % }">Update Market</a></li>
         </ol>
     </nav>
 </div>
@@ -16,19 +16,23 @@
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
-                    <h1 class="card-title">Market</h1>
 
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Market Name</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="text" name="market_name" value="{{getmarket.market_name}}" required>
+                            <input class="form-control" type="text" name="market_name" value="{{market.market_name}}" required>
                         </div>
                     </div>
-
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Market Address</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="text" name="market_address" value="{{getmarket.market_address}}" required>
+                            <input class="form-control" type="text" name="market_address" value="{{market.market_address}}" required>
+                        </div>
+                    </div>
+                    <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">Phone Number</label>
+                        <div class="col-sm-9">
+                            <input class="form-control" type="text" name="phone_number" value="{{market.phone_number}}" required>
                         </div>
                     </div>
 
