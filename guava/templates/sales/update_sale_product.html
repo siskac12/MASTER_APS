@@ -2,11 +2,11 @@
 
 {% block content %}
 <div class="page-header">
-    <h1 class="page-title">Update Sales Data</h1>
+    <h1 class="page-title">Update Sale Product</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_sale' %}">Data Sales</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'update_sale' sale.sale_id %}">Update Sale</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'update_sale_product' detail.sale_product_id %}">Update Sale Product</a></li>
         </ol>
     </nav>
 </div>
@@ -17,13 +17,13 @@
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
-                    <h1 class="card-title">Sale</h1>
+                    <h1 class="card-title">Sale Product</h1>
                     <div class="form-group row">
                         <label for="market" class="col-sm-3 col-form-label">Market</label>
                         <div class="col-sm-9">
                             <select class="form-control" name="market" id="market" required>
                                 {% for item in market_obj %}
-                                {% if item == sale.market_id %}
+                                {% if item == detail.sale_id.market_id %}
                                 <option selected value="{{ item.market_id }}">{{ item.market_name }}</option>
                                 {% else %}
                                 <option value="{{ item.market_id }}">{{ item.market_name }}</option>
@@ -37,6 +37,28 @@
                         <label for="date" class="col-sm-3 col-form-label">Date</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="date" name="date" id="date" value="{{ sale_date }}" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="product" class="col-sm-3 col-form-label">Product</label>
+                        <div class="col-sm-9">
+                            <select class="form-control" name="product" id="product" required>
+                                {% for item in product_obj %}
+                                {% if item == detail.product_id %}
+                                <option selected value="{{ item.product_id }}">{{ item }}</option>
+                                {% else %}
+                                <option value="{{ item.product_id }}">{{ item }}</option>
+                                {% endif %}
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
+                        <label for="product_quantity" class="col-sm-3 col-form-label">Quantity</label>
+                        <div class="col-sm-9">
+                            <input class="form-control" type="number" name="product_quantity" id="product_quantity" value="{{ detail.product_quantity }}" min="1" required>
                         </div>
                     </div>
 

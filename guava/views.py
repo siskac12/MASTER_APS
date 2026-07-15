@@ -1105,6 +1105,409 @@ def read_inventory(request):
         "today": datetime.now().date(),
     })
 
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def read_sale(request):
+    product_sales = models.SaleProduct.objects.select_related(
+        "sale_id__market_id",
+        "product_id",
+    ).order_by("-sale_id__date", "sale_product_id")
+    commodity_sales = models.SaleCommodity.objects.select_related(
+        "sale_id__market_id",
+        "commodity_id__grade_id",
+        "grade_id",
+    ).order_by("-sale_id__date", "sale_commodity_id")
+
+    if not product_sales.exists() and not commodity_sales.exists():
+        messages.error(request, "No Sales data found!")
+
+    return render(request, "sales/read_sales.html", {
+        "product_sales": product_sales,
+        "commodity_sales": commodity_sales,
+    })
+
+
+@login_required(login_url="login")
+@role_required(["owner"])
+def create_sale(request):
+    market_obj = models.Market.objects.all()
+    product_obj = models.Product.objects.all()
+    commodity_obj = models.Commodity.objects.select_related("grade_id").all()
+
+    if request.method == "GET":
+        return render(request, "sales/create_sales.html", {
+            "market_obj": market_obj,
+            "product_obj": product_obj,
+            "commodity_obj": commodity_obj,
+        })
+
+    market_id = request.POST.get("market")
+    sale_date = request.POST.get("date")
+    products = request.POST.getlist("product")
+    product_quantities = request.POST.getlist("product_quantity")
+    commodities = request.POST.getlist("commodity")
+    commodity_quantities = request.POST.getlist("commodity_quantity")
+
+    if not market_id or not sale_date:
+        messages.error(request, "Market and sale date are required!")
+        return redirect("create_sale")
+
+    try:
+        market = models.Market.objects.get(market_id=market_id)
+    except models.Market.DoesNotExist:
+        messages.error(request, "Selected market is invalid!")
+        return redirect("create_sale")
+
+    sale = models.Sale.objects.create(
+        market_id=market,
+        date=sale_date,
+    )
+
+    saved_products = []
+    for product_id, quantity in zip(products, product_quantities):
+        if not product_id or not quantity:
+            continue
+
+        try:
+            product = models.Product.objects.get(product_id=product_id)
+        except models.Product.DoesNotExist:
+            continue
+
+        detail = models.SaleProduct.objects.create(
+            sale_id=sale,
+            product_id=product,
+            product_quantity=quantity,
+        )
+        saved_products.append(detail)
+
+    saved_commodities = []
+    for commodity_id, quantity in zip(commodities, commodity_quantities):
+        if not commodity_id or not quantity:
+            continue
+
+        try:
+            commodity = models.Commodity.objects.select_related("grade_id").get(
+                commodity_id=commodity_id
+            )
+        except models.Commodity.DoesNotExist:
+            continue
+
+        detail = models.SaleCommodity.objects.create(
+            sale_id=sale,
+            commodity_id=commodity,
+            grade_id=commodity.grade_id,
+            commodity_quantity=quantity,
+        )
+        saved_commodities.append(detail)
+
+    if not saved_products and not saved_commodities:
+        sale.delete()
+        messages.error(request, "No valid Sales detail data was saved!")
+        return redirect("create_sale")
+
+    product_summary = ", ".join(
+        f"{detail.product_id} ({detail.product_quantity})" for detail in saved_products
+    )
+    commodity_summary = ", ".join(
+        f"{detail.commodity_id} ({detail.commodity_quantity} kg)"
+        for detail in saved_commodities
+    )
+    detail_summary = "; ".join(
+        summary for summary in [product_summary, commodity_summary] if summary
+    )
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Add Sale",
+        description=f"Added sale for {market.market_name} on {sale_date}: {detail_summary}."
+    )
+
+    messages.success(request, "Sale successfully added!")
+    return redirect("read_sale")
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def update_sale(request, id):
+    try:
+        sale = models.Sale.objects.select_related("market_id").get(sale_id=id)
+    except models.Sale.DoesNotExist:
+        messages.error(request, "Sale not found!")
+        return redirect("read_sale")
+
+    market_obj = models.Market.objects.all()
+    sale_date = sale.date.strftime("%Y-%m-%d")
+
+    if request.method == "GET":
+        return render(request, "sales/update_sales.html", {
+            "sale": sale,
+            "market_obj": market_obj,
+            "sale_date": sale_date,
+        })
+
+    market_id = request.POST.get("market")
+    new_sale_date = request.POST.get("date")
+
+    if not market_id or not new_sale_date:
+        messages.error(request, "Market and sale date are required!")
+        return redirect("update_sale", id=id)
+
+    try:
+        market = models.Market.objects.get(market_id=market_id)
+    except models.Market.DoesNotExist:
+        messages.error(request, "Selected market is invalid!")
+        return redirect("update_sale", id=id)
+
+    old_market = sale.market_id
+    old_date = sale.date
+
+    sale.market_id = market
+    sale.date = new_sale_date
+    sale.save()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Update Sale",
+        description=(
+            f"Updated sale ID {sale.sale_id}: {old_market}, {old_date} -> "
+            f"{market}, {new_sale_date}."
+        )
+    )
+
+    messages.success(request, "Sale successfully updated!")
+    return redirect("read_sale")
+
+
+@login_required(login_url="login")
+@role_required(["owner"])
+def delete_sale(request, id):
+    try:
+        sale = models.Sale.objects.select_related("market_id").get(sale_id=id)
+    except models.Sale.DoesNotExist:
+        messages.error(request, "Sale not found!")
+        return redirect("read_sale")
+
+    market = sale.market_id
+    sale_date = sale.date
+    sale.delete()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Delete Sale",
+        description=f"Deleted sale for {market} on {sale_date}."
+    )
+
+    messages.success(request, "Sale successfully deleted!")
+    return redirect("read_sale")
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def update_sale_product(request, id):
+    try:
+        detail = models.SaleProduct.objects.select_related(
+            "sale_id__market_id",
+            "product_id",
+        ).get(sale_product_id=id)
+    except models.SaleProduct.DoesNotExist:
+        messages.error(request, "Sale Product detail not found!")
+        return redirect("read_sale")
+
+    market_obj = models.Market.objects.all()
+    product_obj = models.Product.objects.all()
+    sale_date = detail.sale_id.date.strftime("%Y-%m-%d")
+
+    if request.method == "GET":
+        return render(request, "sales/update_sale_product.html", {
+            "detail": detail,
+            "market_obj": market_obj,
+            "product_obj": product_obj,
+            "sale_date": sale_date,
+        })
+
+    market_id = request.POST.get("market")
+    new_sale_date = request.POST.get("date")
+    product_id = request.POST.get("product")
+    quantity = request.POST.get("product_quantity")
+
+    if not market_id or not new_sale_date or not product_id or not quantity:
+        messages.error(request, "All Sale Product fields are required!")
+        return redirect("update_sale_product", id=id)
+
+    try:
+        market = models.Market.objects.get(market_id=market_id)
+        product = models.Product.objects.get(product_id=product_id)
+    except (models.Market.DoesNotExist, models.Product.DoesNotExist):
+        messages.error(request, "Selected market or product is invalid!")
+        return redirect("update_sale_product", id=id)
+
+    old_market = detail.sale_id.market_id
+    old_date = detail.sale_id.date
+    old_product = detail.product_id
+    old_quantity = detail.product_quantity
+
+    sale = detail.sale_id
+    sale.market_id = market
+    sale.date = new_sale_date
+    sale.save()
+
+    detail.product_id = product
+    detail.product_quantity = quantity
+    detail.save()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Update Sale Product",
+        description=(
+            f"Updated sale product detail ID {detail.sale_product_id}: "
+            f"{old_market}, {old_date}, {old_product}, {old_quantity} -> "
+            f"{market}, {new_sale_date}, {product}, {quantity}."
+        )
+    )
+
+    messages.success(request, "Sale Product successfully updated!")
+    return redirect("read_sale")
+
+
+@login_required(login_url="login")
+@role_required(["owner"])
+def delete_sale_product(request, id):
+    try:
+        detail = models.SaleProduct.objects.select_related(
+            "sale_id__market_id",
+            "product_id",
+        ).get(sale_product_id=id)
+    except models.SaleProduct.DoesNotExist:
+        messages.error(request, "Sale Product detail not found!")
+        return redirect("read_sale")
+
+    sale = detail.sale_id
+    sale_date = sale.date
+    market = sale.market_id
+    product = detail.product_id
+    quantity = detail.product_quantity
+
+    detail.delete()
+    has_product_details = models.SaleProduct.objects.filter(sale_id=sale).exists()
+    has_commodity_details = models.SaleCommodity.objects.filter(sale_id=sale).exists()
+    if not has_product_details and not has_commodity_details:
+        sale.delete()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Delete Sale Product",
+        description=f"Deleted sale product detail: {market}, {sale_date}, {product}, {quantity}."
+    )
+
+    messages.success(request, "Sale Product successfully deleted!")
+    return redirect("read_sale")
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def update_sale_commodity(request, id):
+    try:
+        detail = models.SaleCommodity.objects.select_related(
+            "sale_id__market_id",
+            "commodity_id__grade_id",
+            "grade_id",
+        ).get(sale_commodity_id=id)
+    except models.SaleCommodity.DoesNotExist:
+        messages.error(request, "Sale Commodity detail not found!")
+        return redirect("read_sale")
+
+    market_obj = models.Market.objects.all()
+    commodity_obj = models.Commodity.objects.select_related("grade_id").all()
+    sale_date = detail.sale_id.date.strftime("%Y-%m-%d")
+
+    if request.method == "GET":
+        return render(request, "sales/update_sale_commodity.html", {
+            "detail": detail,
+            "market_obj": market_obj,
+            "commodity_obj": commodity_obj,
+            "sale_date": sale_date,
+        })
+
+    market_id = request.POST.get("market")
+    new_sale_date = request.POST.get("date")
+    commodity_id = request.POST.get("commodity")
+    quantity = request.POST.get("commodity_quantity")
+
+    if not market_id or not new_sale_date or not commodity_id or not quantity:
+        messages.error(request, "All Sale Commodity fields are required!")
+        return redirect("update_sale_commodity", id=id)
+
+    try:
+        market = models.Market.objects.get(market_id=market_id)
+        commodity = models.Commodity.objects.select_related("grade_id").get(
+            commodity_id=commodity_id
+        )
+    except (models.Market.DoesNotExist, models.Commodity.DoesNotExist):
+        messages.error(request, "Selected market or commodity is invalid!")
+        return redirect("update_sale_commodity", id=id)
+
+    old_market = detail.sale_id.market_id
+    old_date = detail.sale_id.date
+    old_commodity = detail.commodity_id
+    old_quantity = detail.commodity_quantity
+
+    sale = detail.sale_id
+    sale.market_id = market
+    sale.date = new_sale_date
+    sale.save()
+
+    detail.commodity_id = commodity
+    detail.grade_id = commodity.grade_id
+    detail.commodity_quantity = quantity
+    detail.save()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Update Sale Commodity",
+        description=(
+            f"Updated sale commodity detail ID {detail.sale_commodity_id}: "
+            f"{old_market}, {old_date}, {old_commodity}, {old_quantity} kg -> "
+            f"{market}, {new_sale_date}, {commodity}, {quantity} kg."
+        )
+    )
+
+    messages.success(request, "Sale Commodity successfully updated!")
+    return redirect("read_sale")
+
+
+@login_required(login_url="login")
+@role_required(["owner"])
+def delete_sale_commodity(request, id):
+    try:
+        detail = models.SaleCommodity.objects.select_related(
+            "sale_id__market_id",
+            "commodity_id__grade_id",
+            "grade_id",
+        ).get(sale_commodity_id=id)
+    except models.SaleCommodity.DoesNotExist:
+        messages.error(request, "Sale Commodity detail not found!")
+        return redirect("read_sale")
+
+    sale = detail.sale_id
+    sale_date = sale.date
+    market = sale.market_id
+    commodity = detail.commodity_id
+    quantity = detail.commodity_quantity
+
+    detail.delete()
+    has_product_details = models.SaleProduct.objects.filter(sale_id=sale).exists()
+    has_commodity_details = models.SaleCommodity.objects.filter(sale_id=sale).exists()
+    if not has_product_details and not has_commodity_details:
+        sale.delete()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Delete Sale Commodity",
+        description=f"Deleted sale commodity detail: {market}, {sale_date}, {commodity}, {quantity} kg."
+    )
+
+    messages.success(request, "Sale Commodity successfully deleted!")
+    return redirect("read_sale")
 # @login_required(login_url="login")
 # def activity_logs(request):
 #     logs = models.ActivityLog.objects.all().order_by('-timestamp') 

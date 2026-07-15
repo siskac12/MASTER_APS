@@ -12,14 +12,15 @@ urlpatterns = [
     path('update_partner/<str:id>', views.update_partner,name='update_partner'),
     path('delete_partner/<str:id>', views.delete_partner,name='delete_partner'),
     # # CRUD SALE
-    # path('create_sale', views.create_sale,name='create_sale'),
-    # path('read_sale', views.read_sale,name='read_sale'),
-    # path('update_sale/<str:id>', views.update_sale,name='update_sale'),
-    # path('delete_sale/<str:id>', views.delete_sale,name='delete_sale'),
+    path('create_sale', views.create_sale,name='create_sale'),
+    path('read_sale', views.read_sale,name='read_sale'),
+    path('update_sale/<str:id>', views.update_sale,name='update_sale'),
+    path('delete_sale/<str:id>', views.delete_sale,name='delete_sale'),
     # # CUD DETAIL SALE
-    # path('update_sale_detail/<str:id>', views.update_sale_detail,name='update_sale_detail'),
-    # path('delete_sale_detail/<str:id>', views.delete_sale_detail,name='delete_sale_detail'),
-    # path('create_sale_detail/<str:id>', views.create_sale_detail,name='create_sale_detail'),
+    path('update_sale_product/<str:id>', views.update_sale_product,name='update_sale_product'),
+    path('delete_sale_product/<str:id>', views.delete_sale_product,name='delete_sale_product'),
+    path('update_sale_commodity/<str:id>', views.update_sale_commodity,name='update_sale_commodity'),
+    path('delete_sale_commodity/<str:id>', views.delete_sale_commodity,name='delete_sale_commodity'),
     # CRUD PRODUCT
     path('create_product', views.create_product,name='create_product'),
     path('read_product', views.read_product,name='read_product'),
