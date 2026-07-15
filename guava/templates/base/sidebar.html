@@ -256,4 +256,37 @@
         </div>
       </li>
       {% endif %}
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic6" aria-expanded="false" aria-controls="ui-basic6">
+          <span class="menu-icon">
+            <i class="mdi mdi-cart"></i>
+          </span>
+          <span class="menu-title">Sales</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic6">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_sale' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Sales</span>
+              </a>
+            </li>
+            {% if is_owner %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_sale' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Sales</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
 </nav> 

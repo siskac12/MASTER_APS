@@ -5,161 +5,148 @@
     <h1 class="page-title">Create Sales Data</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted"
-                    href="{% url 'read_sale' %}">Sales Data</a></li>
-            <li class="breadcrumb-item"><a href="{% url 'create_sale' %}">Create sales</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_sale' %}">Sales Data</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'create_sale' %}">Create Sale</a></li>
         </ol>
     </nav>
 </div>
+
 <div class="row">
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
-                    <h1 class="card-title">sales</h1>
-
+                    <h1 class="card-title">Sale</h1>
                     <div class="form-group row">
-                        <label class="col-sm-3 col-form-label">Market Name</label>
+                        <label for="market" class="col-sm-3 col-form-label">Market</label>
                         <div class="col-sm-9">
-                            <select class="form-control" name="market">
-                                {% for i in market_obj %}
-                                <option value="{{i.market_id}}">{{i.market_name}}</option>
+                            <select class="form-control" name="market" id="market" required>
+                                {% for item in market_obj %}
+                                <option value="{{ item.market_id }}">{{ item.market_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>
                     </div>
 
                     <div class="form-group row">
-                        <label class="col-sm-3 col-form-label">Date</label>
+                        <label for="date" class="col-sm-3 col-form-label">Date</label>
                         <div class="col-sm-9">
-                            <input class="form-control" type="date" name="date" required>
+                            <input class="form-control" type="date" name="date" id="date" required>
                         </div>
                     </div>
 
-                    <br>
-                    <br>
-
-                    <h1 class="card-title">Detail sales</h1>
-                    <div id="adddetail">
-
-                        <div class="detail-group mb-3">
-                            <h3 class="card-description">Detail sales 1</h3>
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Product Name</label>
-                                <div class="col-sm-9">
-                                    <select class="form-control product" name="product">
-                                        <option value="" selected></option>
-                                        {% for i in product_obj %}
-                                        <option value="{{i.product_id}}">{{i}}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Commodity Name</label>
-                                <div class="col-sm-9">
-                                    <select class="form-control" name="commodity">
-                                        <option value="" selected></option>
-                                        {% for i in commodity_obj %}
-                                        <option value="{{i.commodity_id}}">{{i}}</option>
-                                        {% endfor %}
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Product Quantity</label>
-                                <div class="col-sm-9">
-                                    <input class="form-control" type="number" name="product_qty" placeholder="Product Quantity" required>
-                                </div>
-                            </div>
-
-                            <div class="form-group row">
-                                <label class="col-sm-3 col-form-label">Commodity Quantity</label>
-                                <div class="col-sm-9">
-                                    <input class="form-control" type="number" name="commodity_qty" placeholder="Commodity Quantity" required>
-                                </div>
-                            </div>
-
-                            <button type="button" class="btn btn-danger" onclick="deleterow(this)">
-                                <i class="mdi mdi-close btn-icon-prepend"></i>Delete</button>
+                    <div class="row mb-4">
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-inverse-success btn-icon-text btn-sm" onclick="addSaleProduct()">
+                                <i class="mdi mdi-plus btn-icon-prepend"></i> Add Product
+                            </button>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-inverse-info btn-icon-text btn-sm" onclick="addSaleCommodity()">
+                                <i class="mdi mdi-plus btn-icon-prepend"></i> Add Commodity
+                            </button>
                         </div>
                     </div>
 
-                    <button type="button" class="btn btn-primary btn-icon-text mr-3" onclick="addsales()">
-                        <i class="mdi mdi-plus btn-icon-prepend"></i>add Detail</button>
+                    <div id="productDetails"></div>
+                    <div id="commodityDetails"></div>
+
                     <button type="submit" class="btn btn-success btn-icon-text">
-                        <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit </button>
+                        <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit
+                    </button>
                 </form>
             </div>
         </div>
     </div>
 </div>
 
+{% block javascripts %}
 <script>
-    function addsales() {
-        let angka = document.querySelectorAll('#adddetail > .detail-group').length + 1;
+    function addSaleProduct() {
+        const rows = document.querySelectorAll('#productDetails .product-row');
+        const angka = rows.length + 1;
         const baris = document.createElement('div');
-        baris.className = 'detail-group mb-3';
+        baris.className = 'product-row border-top pt-3 mb-4';
         baris.innerHTML = `
-            <h3 class="card-description">Detail sales ${angka}</h3>
+            <h3 class="card-title">Sale Product Detail ${angka}</h3>
             <div class="form-group row">
-                <label class="col-sm-3 col-form-label">Product Name</label>
+                <label class="col-sm-3 col-form-label">Product</label>
                 <div class="col-sm-9">
-                    <select class="form-control product" name="product">
-                        <option value="" selected></option>
-                        {% for i in productobj %}
-                        <option value="{{i.product_id}}">{{i}}</option>
+                    <select class="form-control product" name="product" required>
+                        {% for item in product_obj %}
+                        <option value="{{ item.product_id }}">{{ item }}</option>
                         {% endfor %}
                     </select>
                 </div>
             </div>
-
             <div class="form-group row">
-                <label class="col-sm-3 col-form-label">Commodity Name</label>
+                <label class="col-sm-3 col-form-label">Quantity</label>
                 <div class="col-sm-9">
-                    <select class="form-control" name="commodity">
-                        <option value="" selected></option>
-                        {% for i in commodityobj %}
-                        <option value="{{i.commodity_id}}">{{i}}</option>
-                        {% endfor %}
-                    </select>
+                    <input class="form-control" type="number" name="product_quantity" placeholder="Product Quantity" min="1" required>
                 </div>
             </div>
-
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label">Product Quantity</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" name="product_qty" placeholder="Product Quantity" required>
-                </div>
-            </div>
-
-            <div class="form-group row">
-                <label class="col-sm-3 col-form-label">Commodity Quantity</label>
-                <div class="col-sm-9">
-                    <input class="form-control" type="number" name="commodity_qty" placeholder="Commodity Quantity" required>
-                </div>
-            </div>
-
-            <button type="button" class="btn btn-danger" onclick="deleterow(this)">
-                            <i class="mdi mdi-close btn-icon-prepend"></i>Delete</button>
+            <button class="btn btn-inverse-danger btn-icon-text btn-sm" type="button" onclick="deleteSaleRow(this, 'product')">
+                <i class="mdi mdi-close btn-icon-prepend"></i> Delete Detail
+            </button>
         `;
-        document.getElementById('adddetail').appendChild(baris);
+        document.getElementById('productDetails').appendChild(baris);
+        updateProductNumbers();
     }
 
-    function deleterow(button) {
-        button.closest('.detail-group').remove();
-        updateDetailNumbers();
+    function addSaleCommodity() {
+        const rows = document.querySelectorAll('#commodityDetails .commodity-row');
+        const angka = rows.length + 1;
+        const baris = document.createElement('div');
+        baris.className = 'commodity-row border-top pt-3 mb-4';
+        baris.innerHTML = `
+            <h3 class="card-title">Sale Commodity Detail ${angka}</h3>
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">Commodity</label>
+                <div class="col-sm-9">
+                    <select class="form-control commodity" name="commodity" required>
+                        {% for item in commodity_obj %}
+                        <option value="{{ item.commodity_id }}">{{ item }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-group row">
+                <label class="col-sm-3 col-form-label">Quantity</label>
+                <div class="col-sm-9">
+                    <input class="form-control" type="number" name="commodity_quantity" placeholder="Commodity Quantity (kg)" min="1" required>
+                </div>
+            </div>
+            <button class="btn btn-inverse-danger btn-icon-text btn-sm" type="button" onclick="deleteSaleRow(this, 'commodity')">
+                <i class="mdi mdi-close btn-icon-prepend"></i> Delete Detail
+            </button>
+        `;
+        document.getElementById('commodityDetails').appendChild(baris);
+        updateCommodityNumbers();
     }
 
-    function updateDetailNumbers() {
-        const details = document.querySelectorAll('#adddetail > .detail-group');
-        details.forEach((detail, index) => {
-            detail.querySelector('h3').textContent = `Detail sales ${index + 1}`;
+    function deleteSaleRow(button, type) {
+        button.closest(type === 'product' ? '.product-row' : '.commodity-row').remove();
+        if (type === 'product') {
+            updateProductNumbers();
+        } else {
+            updateCommodityNumbers();
+        }
+    }
+
+    function updateProductNumbers() {
+        const rows = document.querySelectorAll('#productDetails .product-row');
+        rows.forEach((row, index) => {
+            row.querySelector('h3').textContent = `Sale Product Detail ${index + 1}`;
+        });
+    }
+
+    function updateCommodityNumbers() {
+        const rows = document.querySelectorAll('#commodityDetails .commodity-row');
+        rows.forEach((row, index) => {
+            row.querySelector('h3').textContent = `Sale Commodity Detail ${index + 1}`;
         });
     }
 </script>
-
+{% endblock javascripts %}
 {% endblock %}
