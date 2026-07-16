@@ -501,6 +501,7 @@ def create_product(request):
     product_name = request.POST["product_name"]
     selling_price = request.POST["selling_price"]
     commodity_quantity = request.POST["commodity_quantity"]
+    production_cost = request.POST["production_cost"]
 
     if models.Product.objects.filter(product_name=product_name).exists():
         messages.error(request, "Product name already exists!")
@@ -513,6 +514,7 @@ def create_product(request):
     data = models.Product.objects.create(
         product_name=product_name,
         selling_price=selling_price,
+        production_cost=production_cost,
         commodity_id=commodity_instance,
         commodity_quantity=commodity_quantity,
     )
@@ -557,6 +559,7 @@ def update_product(request, id):
     selling_price = request.POST["selling_price"]
     commodity_quantity = request.POST["commodity_quantity"]
     commodity_id = request.POST["commodity_id"]
+    production_cost = request.POST["production_cost"]
 
     if models.Product.objects.filter(product_name=product_name).exclude(product_id=id).exists():
         messages.error(request, "Product name already exists!")
@@ -577,6 +580,7 @@ def update_product(request, id):
     product.selling_price = selling_price
     product.commodity_quantity = commodity_quantity
     product.commodity_id = commodity
+    product.production_cost = production_cost
     product.save()
 
     models.ActivityLog.objects.create(
@@ -1144,6 +1148,23 @@ def update_inventory(commodity_obj, quantity):
         batch.save()
         remaining -= cut
 
+def restore_inventory(commodity_obj, quantity):
+    today = datetime.now().date()
+
+    batch = models.InventoryBatch.objects.filter(
+        commodity_id=commodity_obj,
+        expired_date__gte=today,
+    ).order_by("expired_date").first()
+
+    if batch is None:
+        batch = models.InventoryBatch.objects.filter(
+            commodity_id=commodity_obj,
+        ).order_by("-expired_date").first()
+
+    if batch:
+        batch.remaining_quantity += quantity
+        batch.save()
+
 @login_required(login_url="login")
 @role_required(["owner"])
 def create_sale(request):
@@ -1588,6 +1609,520 @@ def delete_sale_commodity(request, id):
 
     messages.success(request, "Sale Commodity successfully deleted!")
     return redirect("read_sale")
+
+@login_required(login_url="login")
+@role_required(["owner", "admin", "production"])
+def read_production(request):
+    production_details = models.ProductionDetail.objects.select_related(
+        "production_id",
+        "product_id",
+        "product_id__commodity_id",
+        "product_id__commodity_id__grade_id",
+    ).order_by("-production_id__date", "-production_detail_id")
+
+    production_rows = []
+
+    for detail in production_details:
+        required_quantity = detail.product_id.commodity_quantity * Decimal(detail.product_quantity)
+        total_cost = detail.product_id.production_cost * detail.product_quantity
+
+        production_rows.append({
+            "detail": detail,
+            "required_quantity": required_quantity,
+            "total_cost": total_cost,
+        })
+
+    if not production_rows:
+        messages.error(request, "No Production data found!")
+
+    return render(request, "production/read_production.html", {
+        "production_rows": production_rows,
+    })
+
+@login_required(login_url="login")
+@role_required(["owner", "admin", "production"])
+def create_production(request):
+    products = models.Product.objects.all()
+
+    if request.method == "GET":
+        return render(request, "production/create_production.html", {
+            "products": products,
+        })
+
+    production_date = request.POST.get("date")
+    product_ids = request.POST.getlist("product_id")
+    quantities = request.POST.getlist("product_quantity")
+    statuses = request.POST.getlist("status")
+
+    if not production_date:
+        messages.error(request, "Production date is required!")
+        return redirect("create_production")
+
+    production_details = []
+    required_totals = {}
+
+    for product_id, quantity, status in zip(product_ids, quantities, statuses):
+        if not product_id or not quantity or not status:
+            continue
+
+        try:
+            product = models.Product.objects.get(product_id=product_id)
+        except models.Product.DoesNotExist:
+            messages.error(request, "Selected product is invalid!")
+            return redirect("create_production")
+
+        quantity = int(quantity)
+        if quantity <= 0:
+            messages.error(request, "Product quantity must be greater than 0!")
+            return redirect("create_production")
+
+        required_quantity = product.commodity_quantity * Decimal(quantity)
+        commodity = product.commodity_id
+
+        production_details.append({
+            "product": product,
+            "quantity": quantity,
+            "status": status,
+            "required_quantity": required_quantity,
+            "commodity": commodity,
+        })
+
+        required_totals[commodity] = required_totals.get(
+            commodity,
+            Decimal("0")
+        ) + required_quantity
+
+    if not production_details:
+        messages.error(request, "No valid production detail data was submitted!")
+        return redirect("create_production")
+
+    today = datetime.now().date()
+    for commodity, required_quantity in required_totals.items():
+        stock = models.InventoryBatch.objects.filter(
+            commodity_id=commodity,
+            remaining_quantity__gt=0,
+            expired_date__gte=today,
+        ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
+
+        if stock < required_quantity:
+            messages.error(
+                request,
+                f"Not enough stock for {commodity}. Required {required_quantity} kg, available {stock} kg."
+            )
+            return redirect("create_production")
+
+    category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Production Cost",
+        defaults={"type": "Expense"}
+    )
+
+    production = models.Production.objects.create(
+        date=production_date
+    )
+
+    saved_details = []
+
+    for item in production_details:
+        product = item["product"]
+        quantity = item["quantity"]
+        status = item["status"]
+        required_quantity = item["required_quantity"]
+
+        detail = models.ProductionDetail.objects.create(
+            production_id=production,
+            product_id=product,
+            product_quantity=quantity,
+            status=status,
+        )
+
+        update_inventory(product.commodity_id, required_quantity)
+
+        total_cost = product.production_cost * quantity
+
+        models.Transaction.objects.create(
+            category_id=category,
+            date=production_date,
+            description=f"Production cost for {product.product_name} x {quantity}",
+            amount=total_cost,
+            reference_type="Production",
+            reference_id=detail.production_detail_id,
+        )
+
+        saved_details.append(detail)
+
+    detail_summary = ", ".join(
+        f"{detail.product_id.product_name} ({detail.product_quantity})"
+        for detail in saved_details
+    )
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Add Production",
+        description=f"Added production on {production_date}: {detail_summary}."
+    )
+
+    messages.success(request, "Production successfully added!")
+    return redirect("read_production")
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin", "production"])
+def update_production(request, id):
+    try:
+        detail = models.ProductionDetail.objects.select_related(
+            "production_id",
+            "product_id",
+            "product_id__commodity_id",
+        ).get(production_detail_id=id)
+    except models.ProductionDetail.DoesNotExist:
+        messages.error(request, "Production detail not found!")
+        return redirect("read_production")
+
+    products = models.Product.objects.all()
+    production_date = detail.production_id.date.strftime("%Y-%m-%d")
+
+    if request.method == "GET":
+        return render(request, "production/update_production.html", {
+            "detail": detail,
+            "products": products,
+            "production_date": production_date,
+        })
+
+    new_date = request.POST.get("date")
+    product_id = request.POST.get("product_id")
+    quantity = request.POST.get("product_quantity")
+    status = request.POST.get("status")
+
+    if not new_date or not product_id or not quantity or not status:
+        messages.error(request, "All Production fields are required!")
+        return redirect("update_production", id=id)
+
+    try:
+        new_product = models.Product.objects.get(product_id=product_id)
+    except models.Product.DoesNotExist:
+        messages.error(request, "Selected product is invalid!")
+        return redirect("update_production", id=id)
+
+    quantity = int(quantity)
+    if quantity <= 0:
+        messages.error(request, "Product quantity must be greater than 0!")
+        return redirect("update_production", id=id)
+
+    old_product = detail.product_id
+    old_quantity = detail.product_quantity
+    old_required_quantity = old_product.commodity_quantity * Decimal(old_quantity)
+    new_required_quantity = new_product.commodity_quantity * Decimal(quantity)
+
+    old_commodity = old_product.commodity_id
+    new_commodity = new_product.commodity_id
+
+    today = datetime.now().date()
+
+    if old_commodity == new_commodity:
+        difference = new_required_quantity - old_required_quantity
+
+        if difference > 0:
+            stock = models.InventoryBatch.objects.filter(
+                commodity_id=new_commodity,
+                remaining_quantity__gt=0,
+                expired_date__gte=today,
+            ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
+
+            if stock < difference:
+                messages.error(
+                    request,
+                    f"Not enough stock for {new_commodity}. Required additional {difference} kg, available {stock} kg."
+                )
+                return redirect("update_production", id=id)
+
+            update_inventory(new_commodity, difference)
+
+        elif difference < 0:
+            restore_inventory(old_commodity, abs(difference))
+
+    else:
+        stock = models.InventoryBatch.objects.filter(
+            commodity_id=new_commodity,
+            remaining_quantity__gt=0,
+            expired_date__gte=today,
+        ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
+
+        if stock < new_required_quantity:
+            messages.error(
+                request,
+                f"Not enough stock for {new_commodity}. Required {new_required_quantity} kg, available {stock} kg."
+            )
+            return redirect("update_production", id=id)
+
+        restore_inventory(old_commodity, old_required_quantity)
+        update_inventory(new_commodity, new_required_quantity)
+
+    old_summary = f"{old_product.product_name}, {old_quantity}, {detail.status}"
+
+    production = detail.production_id
+    production.date = new_date
+    production.save()
+
+    detail.product_id = new_product
+    detail.product_quantity = quantity
+    detail.status = status
+    detail.save()
+
+    total_cost = new_product.production_cost * quantity
+
+    transaction = models.Transaction.objects.filter(
+        reference_type="Production",
+        reference_id=detail.production_detail_id,
+    ).first()
+
+    category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Production Cost",
+        defaults={"type": "Expense"}
+    )
+
+    if transaction:
+        transaction.category_id = category
+        transaction.date = new_date
+        transaction.description = f"Production cost for {new_product.product_name} x {quantity}"
+        transaction.amount = total_cost
+        transaction.save()
+    else:
+        models.Transaction.objects.create(
+            category_id=category,
+            date=new_date,
+            description=f"Production cost for {new_product.product_name} x {quantity}",
+            amount=total_cost,
+            reference_type="Production",
+            reference_id=detail.production_detail_id,
+        )
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Update Production",
+        description=(
+            f"Updated production detail ID {detail.production_detail_id}: "
+            f"{old_summary} -> {new_product.product_name}, {quantity}, {status}."
+        )
+    )
+
+    messages.success(request, "Production successfully updated!")
+    return redirect("read_production")
+
+@login_required(login_url="login")
+@role_required(["owner"])
+def delete_production(request, id):
+    try:
+        detail = models.ProductionDetail.objects.select_related(
+            "production_id",
+            "product_id",
+            "product_id__commodity_id",
+        ).get(production_detail_id=id)
+    except models.ProductionDetail.DoesNotExist:
+        messages.error(request, "Production detail not found!")
+        return redirect("read_production")
+
+    production = detail.production_id
+    product = detail.product_id
+    quantity = detail.product_quantity
+    required_quantity = product.commodity_quantity * Decimal(quantity)
+    commodity = product.commodity_id
+    production_date = production.date
+
+    restore_inventory(commodity, required_quantity)
+
+    models.Transaction.objects.filter(
+        reference_type="Production",
+        reference_id=detail.production_detail_id,
+    ).delete()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Delete Production",
+        description=(
+            f"Deleted production detail: {product.product_name}, "
+            f"{quantity} unit, {required_quantity} kg {commodity}, date {production_date}."
+        )
+    )
+
+    detail.delete()
+
+    if not models.ProductionDetail.objects.filter(production_id=production).exists():
+        production.delete()
+
+    messages.success(request, "Production successfully deleted!")
+    return redirect("read_production")
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def create_commodity(request):
+    grade_obj = models.Grade.objects.all()
+    
+    if request.method == 'GET':
+        return render(request, 'commodity/create_commodity.html', {
+            'grade_obj': grade_obj
+        })
+    
+    else:
+        grade_name = request.POST['grade_name']
+        commodity_name = request.POST['commodity_name']
+        shelf_life = request.POST['shelf_life']
+        purchase_price = request.POST['purchase_price']
+        selling_price = request.POST['selling_price']
+
+        commodity_obj = models.Commodity.objects.filter(
+            commodity_name=commodity_name,
+            grade_id__grade_name=grade_name
+        )
+
+        if commodity_obj.exists():
+            messages.error(request, "Commodity already exists!")
+        
+        else:
+            grade_instance = models.Grade.objects.get(grade_name=grade_name)
+            data = models.Commodity(
+                grade_id=grade_instance,
+                commodity_name=commodity_name,
+                shelf_life = shelf_life,
+                purchase_price=purchase_price,
+                selling_price=selling_price,
+            )
+            data.save()
+
+            models.ActivityLog(
+                user=request.user,
+                action="Add Commodity",
+                description=(
+                    f"Added new commodity: {data.commodity_name}, "
+                    f"Grade {data.grade_id.grade_name}, "
+                    f"Purchase {data.purchase_price}, "
+                    f"Selling {data.selling_price}."
+                )
+            ).save()
+
+            messages.success(request, "Commodity has been successfully added!")
+
+        return redirect('read_commodity')
+
+@login_required(login_url='login')
+@role_required(['owner', 'admin', 'inspection'])
+def read_transactioncategory(request):
+    category_obj = models.TransactionCategory.objects.all()
+    if not category_obj.exists():
+        messages.error(request, "No Transaction category data found!")
+
+    return render(request, 'transaction/read_transactioncategory.html', {
+        'category_obj': category_obj
+    })
+
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def create_transactioncategory(request):
+    if request.method == "GET":
+        return render(request, 'transaction/create_transactioncategory.html')
+
+    category_name = request.POST['category_name']
+    category_type = request.POST['type']
+
+    category_obj = models.TransactionCategory.objects.filter(
+        category_name=category_name,
+        type=category_type
+    )
+
+    if category_obj.exists():
+        messages.error(request, "Transaction Category already exists!")
+        return redirect("create_transactioncategory")
+
+    data = models.TransactionCategory(
+        category_name=category_name,
+        type=category_type,
+    )
+    data.save()
+
+    models.ActivityLog(
+        user=request.user,
+        action="Add Transaction Category",
+        description=f"Added new transaction category: {data.category_name} ({data.type})."
+    ).save()
+
+    messages.success(request, "Transaction Category successfully added!")
+    return redirect("read_transactioncategory")
+
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def update_transactioncategory(request, id):
+    try:
+        category = models.TransactionCategory.objects.get(category_id=id)
+    except models.TransactionCategory.DoesNotExist:
+        messages.error(request, "Transaction Category not found!")
+        return redirect('read_transactioncategory')
+
+    if request.method == 'GET':
+        return render(request, 'transaction/update_transactioncategory.html', {
+            'category': category,
+            'id': id,
+        })
+
+    else:
+        new_category_name = request.POST['category_name']
+        new_type = request.POST['type']
+
+        category_obj = models.TransactionCategory.objects.filter(
+            category_name=new_category_name,
+            type=new_type
+        )
+
+        if category_obj.exists() and (
+            category.category_name != new_category_name
+            or category.type != new_type
+        ):
+            messages.error(request, "Transaction Category already exists!")
+            return redirect('update_transactioncategory', id)
+
+        old_name = category.category_name
+        old_type = category.type
+
+        category.category_name = new_category_name
+        category.type = new_type
+        category.save()
+
+        models.ActivityLog(
+            user=request.user,
+            action="Update Transaction Category",
+            description=(
+                f"Updated transaction category ID {category.category_id}:\n"
+                f"From: {old_name} ({old_type})\n"
+                f"To: {category.category_name} ({category.type})"
+            )
+        ).save()
+
+        messages.success(request, "Transaction Category has been successfully updated!")
+        return redirect('read_transactioncategory')
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def delete_transactioncategory(request, id):
+    try:
+        category = models.TransactionCategory.objects.get(category_id=id)
+    except models.TransactionCategory.DoesNotExist:
+        messages.error(request, "Transaction Category not found!")
+        return redirect('read_transactioncategory')
+
+    category_name = category.category_name
+    category_type = category.type
+
+    models.ActivityLog(
+        user=request.user,
+        action="Delete Transaction Category",
+        description=(
+            f"Deleted transaction category: {category_name} ({category_type})."
+        )
+    ).save()
+
+    category.delete()
+    messages.success(request, "Transaction Category has been successfully deleted!")
+    return redirect('read_transactioncategory')
 # @login_required(login_url="login")
 # def activity_logs(request):
 #     logs = models.ActivityLog.objects.all().order_by('-timestamp') 

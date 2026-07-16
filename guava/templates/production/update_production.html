@@ -5,8 +5,8 @@
 <div class="page-header">
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-            <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'readpartner' %}">Data Partner</a></li>
-          <li class="breadcrumb-item " ><a  href="">Update Partner</a></li>
+            <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'read_production' %}">Data Production</a></li>
+          <li class="breadcrumb-item " ><a  href="">Update Production</a></li>
         </ol>
       </nav>
 </div>
@@ -20,9 +20,9 @@
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label" for="product">product</label>
                     <div class="col-sm-9">
-                        <select class="form-control" name="product" id="product">
+                        <select class="form-control" name="product_id" id="product_id">
                             {% for item in products %}
-                            {% if item.product_id == production_detail.product_id.product_id %}
+                            {% if item.product_id == detail.product_id.product_id %}
                             <option selected value="{{item.product_id}}">{{item}}</option>
                             {% else %}
                             <option value="{{item.product_id}}">{{item}}</option>
@@ -33,25 +33,29 @@
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label"  for="status_product">Status product</label>
+                    <label class="col-sm-3 col-form-label"  for="status">Status product</label>
 
                     <div class="col-sm-9">
-                        <input class="form-control" type="text" value="{{production_detail.status_product}}" name="status_product" id="status_product" required>
+                        <select class="form-control" name="status" required>
+                            <option value="Processing" {% if detail.status == "Processing" %}selected{% endif %}>Processing</option>
+                            <option value="Completed" {% if detail.status == "Completed" %}selected{% endif %}>Completed</option>
+                            <option value="Cancelled" {% if detail.status == "Cancelled" %}selected{% endif %}>Cancelled</option>
+                        </select>
                     </div>
                 </div>
                 <div class="form-group row">
 
                     <label class="col-sm-3 col-form-label"  for="date">Date</label>
                     <div class="col-sm-9">
-                        <input class="form-control" type="date" value="{{date}}" name="date" id="date" required>
+                        <input class="form-control" type="date" value="{{production_date}}" name="date" id="date" required>
 
                     </div>
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label"  for="quantity">Quantity</label>
+                    <label class="col-sm-3 col-form-label"  for="product_quantity">Quantity</label>
                     <div class="col-sm-9">
-                        <input class="form-control" type="number"  value="{{production_detail.quantity_product}}" name="quantity" id="quantity" required>
+                        <input class="form-control" type="number"  value="{{detail.product_quantity}}" name="product_quantity" id="product_quantity" required>
                     </div>
                 </div>
          

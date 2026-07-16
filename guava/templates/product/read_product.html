@@ -24,19 +24,21 @@
                             <th class="text-center">Product Price</th>
                             <th class="text-center">Commodity Used</th>
                             <th class="text-center">Commodity Quantity</th>
+                            <th class="text-center">Production Cost</th>
                             {% if is_owner %}
                             <th class="text-center">Action</th>
                             {% endif %}
                         </tr>
                     </thead>
                     <tbody class="table-dark">
+                        {% for i in product_obj %}
                         <tr>
-                            {% for i in product_obj %}
                             <td>{{ forloop.counter }}</td>
                             <td>{{ i.product_name }}</td>
                             <td class="text-right">Rp{{ i.selling_price }}</td>
                             <td>{{ i.commodity_id }}</td>
                             <td>{{ i.commodity_quantity }} kg</td>
+                            <td class="text-right">Rp{{ i.production_cost }}</td>
                             {% if is_owner %}
                             <td class="text-center">
                                 <a href="{% url 'update_product' i.product_id %}"><button class="btn-inverse-warning btn-icon-text btn-sm mr-2">

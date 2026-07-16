@@ -256,6 +256,70 @@
         </div>
       </li>
       {% endif %}
+      {% if is_owner or is_admin or is_production %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic7" aria-expanded="false" aria-controls="ui-basic7">
+          <span class="menu-icon">
+            <i class="mdi mdi-factory"></i>
+          </span>
+          <span class="menu-title">Production</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic7">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_production' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Production</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_production' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Production</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+      {% if is_owner or is_admin or is_inspection %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic8" aria-expanded="false" aria-controls="ui-basic8">
+          <span class="menu-icon">
+            <i class="mdi mdi-format-list-bulleted-type"></i>
+          </span>
+          <span class="menu-title">Transaction Category</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic8">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_transactioncategory' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Category</span>
+              </a>
+            </li>
+            {% if is_owner %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_transactioncategory' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Category</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
       {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic6" aria-expanded="false" aria-controls="ui-basic6">

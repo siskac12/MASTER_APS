@@ -52,6 +52,7 @@ class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
     product_name = models.CharField(max_length=100) #Guava Pastry, Rujak Telang
     selling_price = models.PositiveIntegerField() #Maksudnya harga jual produk
+    production_cost = models.PositiveIntegerField(default=0)
     commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE) #Nama commodity yang dibutuhkan (satu aja)
     commodity_quantity = models.DecimalField(max_digits=5, decimal_places=2) #Jumlah comomodity yang diperlukan untuk buat satu unit produk (kg)
 
@@ -193,6 +194,7 @@ REFERENCE_TYPE = [
     ("SaleCommodity", "Sale Commodity"),
     ("PartnerHarvest", "Partner Harvest"),
     ("Cost", "Cost"),
+    ("Production", "Production")
 ]
 
 class Transaction(models.Model):

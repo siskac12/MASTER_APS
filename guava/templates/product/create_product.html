@@ -33,11 +33,18 @@
                     </div>
 
                     <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">Production Cost / Unit</label>
+                        <div class="col-sm-9">
+                            <input class="form-control" type="number" name="production_cost" placeholder="Production Cost per Product" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Commodity</label>
                         <div class="col-sm-9">
-                            <select name="commodity_name" class="form-control">
+                            <select name="commodity_id" class="form-control">
                                 {% for i in commodity_obj %}
-                                <option value="{{i.commodity_name}}">{{i.commodity_name}}</option>
+                                <option value="{{ i.commodity_id }}">{{ i.commodity_name }}</option>
                                 {% endfor %}
                             </select>
                         </div>

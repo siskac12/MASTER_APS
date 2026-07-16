@@ -32,6 +32,13 @@
                     </div>
                     
                     <div class="form-group row">
+                        <label class="col-sm-3 col-form-label">Production Cost / Unit</label>
+                        <div class="col-sm-9">
+                            <input class="form-control" type="number" name="production_cost" value="{{ product.production_cost }}" min="0" required>
+                        </div>
+                    </div>
+
+                    <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Commodity Used</label>
                         <div class="col-sm-9">
                             <select class="form-control" name="commodity_id">

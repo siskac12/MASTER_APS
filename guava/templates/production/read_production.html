@@ -6,66 +6,84 @@
     <h1 class="page-title">Data Production</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item "><a href="{% url 'read_production' %}">Data Production</a></li>
-          {% if is_owner or is_admin or is_production %}
-          <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_production' %}">Create Production</a></li>
-          {% endif %}
+            <li class="breadcrumb-item">
+                <a href="{% url 'read_production' %}">Data Production</a>
+            </li>
+            {% if is_owner or is_admin or is_production %}
+            <li class="breadcrumb-item active" aria-current="page">
+                <a class="text-muted" href="{% url 'create_production' %}">Create Production</a>
+            </li>
+            {% endif %}
         </ol>
-      </nav>
+    </nav>
 </div>
-   
-<div class="row">
-    
-        <div class="col-lg-12 grid-margin stretch-card">
 
-            <div class="card">
-                <div class="card-body">
-                    <div class="table-responsive">
-                        <table  class="table table-bordered text-center" id="dataproduction" >
-                            <thead class="table-light ">
-                                <tr>
-                                    <th>No</th>
-                                    <th>Product Name</th>
-                                    <th>Product Status</th>
-                                    <th>Date</th>
-                                    <th>Quantity</th>
-                                    {% if is_owner or is_admin or is_production %}
-                                    <th>Action</th>
+<div class="row">
+    <div class="col-lg-12 grid-margin stretch-card">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-bordered text-center" id="dataproduction">
+                        <thead class="table-light">
+                            <tr>
+                                <th>No</th>
+                                <th>Date</th>
+                                <th>Product Name</th>
+                                <th>Commodity Used</th>
+                                <th>Commodity Quantity Used</th>
+                                <th>Product Quantity</th>
+                                <th>Status</th>
+                                <th>Production Cost / Unit</th>
+                                <th>Total Cost</th>
+                                {% if is_owner or is_admin or is_production %}
+                                <th>Action</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody class="table-dark">
+                            {% for row in production_rows %}
+                            <tr>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ row.detail.production_id.date }}</td>
+                                <td>{{ row.detail.product_id.product_name }}</td>
+                                <td>{{ row.detail.product_id.commodity_id }}</td>
+                                <td>{{ row.required_quantity }} kg</td>
+                                <td>{{ row.detail.product_quantity }}</td>
+                                <td>{{ row.detail.status }}</td>
+                                <td class="text-right">Rp{{ row.detail.product_id.production_cost }}</td>
+                                <td class="text-right">Rp{{ row.total_cost }}</td>
+
+                                {% if is_owner or is_admin or is_production %}
+                                <td>
+                                    <a href="{% url 'update_production' row.detail.production_detail_id %}">
+                                        <button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2">
+                                            <i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update
+                                        </button>
+                                    </a>
+
+                                    {% if is_owner %}
+                                    <a href="{% url 'delete_production' row.detail.production_detail_id %}">
+                                        <button class="btn btn-inverse-danger btn-icon-text btn-sm">
+                                            <i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete
+                                        </button>
+                                    </a>
                                     {% endif %}
-                                </tr>
-                            </thead>
-                            <tbody class="table-dark">
-                                {% for item in production_details %}
-                                <tr>
-                                    <td>{{ forloop.counter }}</td>
-                                    <td>{{ item.product_id.product_name }}</td>
-                                    <td>{{ item.product_status }}</td>
-                                    <td>{{ item.production_id.date }}</td>
-                                    <td>{{ item.product_quantity }}</td>
-                                    {% if is_owner or is_admin or is_production %}
-                                    <td>
-                                        <a href="{% url 'update_product' item.production_detail_id %}">
-                                            <button class="btn btn-inverse-warning">Update</button>
-                                        </a>
-                                        {% if is_owner %}
-                                        <a href="{% url 'delete_product' item.production_detail_id %}">
-                                            <button class="btn btn-inverse-danger">Delete</button>
-                                        </a>
-                                        {% endif %}
-                                    </td>
-                                    {% endif %}
-                                </tr>
-                                {% empty %}
-                                <tr>
-                                    <td colspan="6" class="text-center">No production data available</td>
-                                </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
+                                </td>
+                                {% endif %}
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="{% if is_owner or is_admin or is_production %}10{% else %}9{% endif %}" class="text-center">
+                                    No production data available
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
                 </div>
             </div>
         </div>
+    </div>
 </div>
     
 {% endblock %}

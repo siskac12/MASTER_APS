@@ -1,0 +1,46 @@
+{% extends "base/base.html" %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">Update Transaction Category</h1>
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_transactioncategory' %}">Data Transaction Category</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'update_transactioncategory' category.category_id %}">Update Transaction Category</a></li>
+        </ol>
+    </nav>
+</div>
+
+<div class="col-12 grid-margin stretch-card">
+    <div class="card">
+        <div class="card-body">
+            <form class="form-sample" method="post">
+                {% csrf_token %}
+                <div class="form-group row">
+                    <label for="category_name" class="col-sm-3 col-form-label">Category Name</label>
+                    <div class="col-sm-9">
+                        <input value="{{ category.category_name }}" class="form-control" placeholder="Category Name" type="text" name="category_name" id="category_name" required>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label for="type" class="col-sm-3 col-form-label">Type</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" name="type" id="type" required>
+                            <option value="Income" {% if category.type == "Income" %}selected{% endif %}>Income</option>
+                            <option value="Expense" {% if category.type == "Expense" %}selected{% endif %}>Expense</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-success btn-icon-text">
+                    <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit
+                </button>
+                <a href="{% url 'read_transactioncategory' %}" class="btn btn-secondary">
+                    Cancel
+                </a>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

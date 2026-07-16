@@ -41,6 +41,11 @@ urlpatterns = [
     path('read_market', views.read_market,name='read_market'),
     path('update_market/<str:id>', views.update_market,name='update_market'),
     path('delete_market/<str:id>', views.delete_market,name='delete_market'),
+    # # CRUD TRANSACTION CATEGORY
+    path('create_transactioncategory', views.create_transactioncategory,name='create_transactioncategory'),
+    path('read_transactioncategory', views.read_transactioncategory,name='read_transactioncategory'),
+    path('update_transactioncategory/<str:id>', views.update_transactioncategory,name='update_transactioncategory'),
+    path('delete_transactioncategory/<str:id>', views.delete_transactioncategory,name='delete_transactioncategory'),
     # # CRUD PARTNER HARVEST
     path('create_partner_harvest', views.create_partner_harvest,name='create_partner_harvest'),
     path('read_partner_harvest', views.read_partner_harvest,name='read_partner_harvest'),
@@ -63,10 +68,10 @@ urlpatterns = [
     # path('update_cost_detail/<str:id>', views.update_cost_detail,name='update_cost_detail'),
     # path('delete_cost_detail/<str:id>', views.delete_cost_detail,name='delete_cost_detail'),
     # # CRUD PRODUCTION
-    # path('create_production', views.create_production,name='create_production'),
-    # path('read_production', views.read_production,name='read_production'),
-    # path('update_production/<str:id>', views.update_production,name='update_production'),
-    # path('delete_production/<str:id>', views.delete_production,name='delete_production'),
+    path('create_production', views.create_production,name='create_production'),
+    path('read_production', views.read_production,name='read_production'),
+    path('update_production/<str:id>', views.update_production,name='update_production'),
+    path('delete_production/<str:id>', views.delete_production,name='delete_production'),
     # # REPORT
     # path('sales_report', views.sales_report,name='sales_report'),
     # path('harvest_report', views.harvest_report,name='harvest_report'),
