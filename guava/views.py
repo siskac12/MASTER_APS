@@ -2,6 +2,7 @@ from django.shortcuts import render, redirect
 from . import models
 from datetime import datetime, timedelta
 import calendar
+from decimal import Decimal
 from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth import login , logout, authenticate
@@ -1126,6 +1127,22 @@ def read_sale(request):
         "commodity_sales": commodity_sales,
     })
 
+def update_inventory(commodity_obj, quantity):
+    today = datetime.now().date()
+    batches = models.InventoryBatch.objects.filter(
+        commodity_id=commodity_obj,
+        remaining_quantity__gt=0,
+        expired_date__gte=today,
+    ).order_by("expired_date")
+
+    remaining = quantity
+    for batch in batches:
+        if remaining <= 0:
+            break
+        cut = min(batch.remaining_quantity, remaining)
+        batch.remaining_quantity -= cut
+        batch.save()
+        remaining -= cut
 
 @login_required(login_url="login")
 @role_required(["owner"])
@@ -1158,21 +1175,94 @@ def create_sale(request):
         messages.error(request, "Selected market is invalid!")
         return redirect("create_sale")
 
+    product_details = []
+    for product_id, quantity in zip(products, product_quantities):
+        if not product_id or not quantity:
+            continue
+        try:
+            product = models.Product.objects.get(product_id=product_id)
+        except models.Product.DoesNotExist:
+            continue
+        product_details.append((product, int(quantity)))
+
+    commodity_details = []
+    for commodity_id, quantity in zip(commodities, commodity_quantities):
+        if not commodity_id or not quantity:
+            continue
+        try:
+            commodity = models.Commodity.objects.select_related("grade_id").get(
+                commodity_id=commodity_id
+            )
+        except models.Commodity.DoesNotExist:
+            continue
+        commodity_details.append((commodity, int(quantity)))
+
+    if not product_details and not commodity_details:
+        messages.error(request, "No valid Sales detail data was submitted!")
+        return redirect("create_sale")
+
+    totals = {}
+
+    for product, quantity in product_details:
+        commodity = product.commodity_id
+        qty = product.commodity_quantity * Decimal(quantity)
+        totals[commodity] = totals.get(commodity, Decimal("0")) + qty
+
+    for commodity, quantity in commodity_details:
+        qty = Decimal(quantity)
+        totals[commodity] = totals.get(commodity, Decimal("0")) + qty
+
+    today = datetime.now().date()
+    errors = []
+    for commodity, qty in totals.items():
+        stock = models.InventoryBatch.objects.filter(
+            commodity_id=commodity,
+            remaining_quantity__gt=0,
+            expired_date__gte=today,
+        ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
+
+        if stock < qty:
+            same_products = [
+                (product, quantity) for product, quantity in product_details
+                if product.commodity_id == commodity
+            ]
+            same_commodities = [
+                (item, quantity) for item, quantity in commodity_details
+                if item == commodity
+            ]
+
+            if same_products:
+                for product, quantity in same_products:
+                    max_qty = int(stock // product.commodity_quantity)
+                    errors.append(
+                        f"Not enough stock for {product.product_name}: "
+                        f"only {max_qty} of {quantity} units can be made."
+                    )
+
+            if same_commodities:
+                for item, quantity in same_commodities:
+                    errors.append(
+                        f"Not enough stock for {item.commodity_name}: "
+                        f"only {stock} of {quantity} kg available."
+                    )
+
+            if not same_products and not same_commodities:
+                errors.append(
+                    f"Not enough stock for {commodity}: only {stock} of {qty} kg available."
+                )
+
+    if errors:
+        for error in errors:
+            messages.error(request, error)
+        return redirect("create_sale")
+
     sale = models.Sale.objects.create(
         market_id=market,
         date=sale_date,
     )
 
     saved_products = []
-    for product_id, quantity in zip(products, product_quantities):
-        if not product_id or not quantity:
-            continue
-
-        try:
-            product = models.Product.objects.get(product_id=product_id)
-        except models.Product.DoesNotExist:
-            continue
-
+    for product, quantity in product_details:
         detail = models.SaleProduct.objects.create(
             sale_id=sale,
             product_id=product,
@@ -1180,18 +1270,12 @@ def create_sale(request):
         )
         saved_products.append(detail)
 
+        commodity = product.commodity_id
+        qty = product.commodity_quantity * Decimal(quantity)
+        update_inventory(commodity, qty)
+
     saved_commodities = []
-    for commodity_id, quantity in zip(commodities, commodity_quantities):
-        if not commodity_id or not quantity:
-            continue
-
-        try:
-            commodity = models.Commodity.objects.select_related("grade_id").get(
-                commodity_id=commodity_id
-            )
-        except models.Commodity.DoesNotExist:
-            continue
-
+    for commodity, quantity in commodity_details:
         detail = models.SaleCommodity.objects.create(
             sale_id=sale,
             commodity_id=commodity,
@@ -1200,10 +1284,7 @@ def create_sale(request):
         )
         saved_commodities.append(detail)
 
-    if not saved_products and not saved_commodities:
-        sale.delete()
-        messages.error(request, "No valid Sales detail data was saved!")
-        return redirect("create_sale")
+        update_inventory(commodity, Decimal(quantity))
 
     product_summary = ", ".join(
         f"{detail.product_id} ({detail.product_quantity})" for detail in saved_products
@@ -1224,7 +1305,6 @@ def create_sale(request):
 
     messages.success(request, "Sale successfully added!")
     return redirect("read_sale")
-
 
 @login_required(login_url="login")
 @role_required(["owner", "admin"])

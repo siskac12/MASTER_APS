@@ -34,46 +34,46 @@
                             </tr>
                         </thead>
                         <tbody class="table-dark">
-                            {% for row in sale_rows %}
-                            {% if row.type == "Product" %}
+                            {% for detail in product_sales %}
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
-                                <td class="text-center">{{ row.detail.sale_id.date }}</td>
-                                <td class="text-center">{{ row.detail.sale_id.market_id }}</td>
+                                <td class="text-center">{{ detail.sale_id.date }}</td>
+                                <td class="text-center">{{ detail.sale_id.market_id }}</td>
                                 <td class="text-center">Product</td>
-                                <td>{{ row.detail.product_id }}</td>
+                                <td>{{ detail.product_id }}</td>
                                 <td class="text-center">-</td>
-                                <td class="text-right">{{ row.detail.product_quantity }}</td>
+                                <td class="text-right">{{ detail.product_quantity }} unit</td>
                                 {% if is_owner or is_admin %}
                                 <td class="text-center">
-                                    <a href="{% url 'update_sale_product' row.detail.sale_product_id %}"><button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
-                                    <a href="{% url 'update_sale' row.detail.sale_id.sale_id %}"><button class="btn btn-inverse-primary btn-icon-text btn-sm mr-2"><i class="mdi mdi-calendar-edit btn-icon-prepend align-middle"></i>Update Sale</button></a>
+                                    <a href="{% url 'update_sale_product' detail.sale_product_id %}"><button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
+                                    <a href="{% url 'update_sale' detail.sale_id.sale_id %}"><button class="btn btn-inverse-primary btn-icon-text btn-sm mr-2"><i class="mdi mdi-calendar-edit btn-icon-prepend align-middle"></i>Update Sale</button></a>
                                     {% if is_owner %}
-                                    <a href="{% url 'delete_sale_product' row.detail.sale_product_id %}"><button class="btn btn-inverse-danger btn-icon-text btn-sm"><i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete</button></a>
+                                    <a href="{% url 'delete_sale_product' detail.sale_product_id %}"><button class="btn btn-inverse-danger btn-icon-text btn-sm"><i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete</button></a>
                                     {% endif %}
                                 </td>
                                 {% endif %}
                             </tr>
-                            {% else %}
+                            {% endfor %}
+                        
+                            {% for detail in commodity_sales %}
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
-                                <td class="text-center">{{ row.detail.sale_id.date }}</td>
-                                <td class="text-center">{{ row.detail.sale_id.market_id }}</td>
+                                <td class="text-center">{{ detail.sale_id.date }}</td>
+                                <td class="text-center">{{ detail.sale_id.market_id }}</td>
                                 <td class="text-center">Commodity</td>
-                                <td>{{ row.detail.commodity_id }}</td>
-                                <td class="text-center">{{ row.detail.grade_id }}</td>
-                                <td class="text-right">{{ row.detail.commodity_quantity }} kg</td>
+                                <td>{{ detail.commodity_id }}</td>
+                                <td class="text-center">{{ detail.grade_id }}</td>
+                                <td class="text-right">{{ detail.commodity_quantity }} kg</td>
                                 {% if is_owner or is_admin %}
                                 <td class="text-center">
-                                    <a href="{% url 'update_sale_commodity' row.detail.sale_commodity_id %}"><button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
-                                    <a href="{% url 'update_sale' row.detail.sale_id.sale_id %}"><button class="btn btn-inverse-primary btn-icon-text btn-sm mr-2"><i class="mdi mdi-calendar-edit btn-icon-prepend align-middle"></i>Update Sale</button></a>
+                                    <a href="{% url 'update_sale_commodity' detail.sale_commodity_id %}"><button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
+                                    <a href="{% url 'update_sale' detail.sale_id.sale_id %}"><button class="btn btn-inverse-primary btn-icon-text btn-sm mr-2"><i class="mdi mdi-calendar-edit btn-icon-prepend align-middle"></i>Update Sale</button></a>
                                     {% if is_owner %}
-                                    <a href="{% url 'delete_sale_commodity' row.detail.sale_commodity_id %}"><button class="btn btn-inverse-danger btn-icon-text btn-sm"><i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete</button></a>
+                                    <a href="{% url 'delete_sale_commodity' detail.sale_commodity_id %}"><button class="btn btn-inverse-danger btn-icon-text btn-sm"><i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete</button></a>
                                     {% endif %}
                                 </td>
                                 {% endif %}
                             </tr>
-                            {% endif %}
                             {% endfor %}
                         </tbody>
                     </table>
