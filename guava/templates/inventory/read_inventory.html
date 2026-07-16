@@ -43,8 +43,10 @@
                                 <td class="text-right">{{ item.remaining_quantity }} kg</td>
                                 <td class="text-center">{{ item.source }}</td>
                                 <td class="text-center">
-                                    {% if item.expired_date < today %}
-                                        <span class="badge badge-danger">Expired</span>
+                                    {% if item.remaining_quantity <= 0 %}
+                                        <span class="badge badge-danger">Depleted</span>
+                                    {% elif item.expired_date < today %}
+                                        <span class="badge badge-dark">Expired</span>
                                     {% else %}
                                         <span class="badge badge-success">Active</span>
                                     {% endif %}
