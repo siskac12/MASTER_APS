@@ -146,8 +146,9 @@ PRODUCTION_STATUS_CHOICES = [
 class ProductionDetail(models.Model):
     production_detail_id = models.AutoField(primary_key=True)
     production_id = models.ForeignKey(Production, on_delete=models.CASCADE)
+    sale_product_id = models.ForeignKey(SaleProduct, on_delete=models.CASCADE, null=True)
     product_id = models.ForeignKey(Product, on_delete=models.CASCADE)
-    product_quantity = models.PositiveIntegerField() #mau produksi berapa produk? nanti langsung liat feasible atau engga dengan cara itung dari programnya pakaah komoditasyang kita punya sekarang mencukupi untuk membuat produk ini, kalau mau enak nanti di UI nya dikasi aja yang bisa di produksi dengan jumlah komoditas sekarang berapa
+    product_quantity = models.PositiveIntegerField()
     status = models.CharField(max_length=20, choices=PRODUCTION_STATUS_CHOICES, default="Processing")
 
     def __str__(self):
@@ -170,10 +171,20 @@ class InventoryBatch(models.Model):
         max_length=10,
         choices=SOURCE_CHOICES
     )
+    source_detail_id = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.commodity_id} ({self.remaining_quantity} kg)"
 
+class InventoryUsage(models.Model):
+    inventory_usage_id = models.AutoField(primary_key=True)
+    inventory_batch_id = models.ForeignKey(InventoryBatch, on_delete=models.CASCADE)
+    sale_commodity_id = models.ForeignKey(SaleCommodity, on_delete=models.CASCADE, null=True, blank=True)
+    sale_product_id = models.ForeignKey(SaleProduct, on_delete=models.CASCADE, null=True, blank=True)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
+
+    def __str__(self):
+        return f"{self.inventory_batch_id} ({self.quantity} kg)"
 
 CATEGORY_TYPE = [
     ("Income","Income"),
