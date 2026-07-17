@@ -21,12 +21,11 @@
                         <thead class="table-light">
                             <tr>
                                 <th class="text-center">No</th>
+                                <th class="text-center">Expired Date</th>
+                                <th class="text-center">Harvest Date</th>
                                 <th class="text-center">Batch</th>
                                 <th class="text-center">Commodity</th>
-                                <th class="text-center">Harvest Date</th>
-                                <th class="text-center">Expired Date</th>
-                                <th class="text-center">Initial</th>
-                                <th class="text-center">Remaining</th>
+                                <th class="text-center">Stock</th>
                                 <th class="text-center">Source</th>
                                 <th class="text-center">Status</th>
                             </tr>
@@ -35,11 +34,10 @@
                             {% for item in inventory_qs %}
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
-                                <td class="text-center">B{{ item.inventory_batch_id|stringformat:"03d" }}</td>
-                                <td>{{ item.commodity_id }}</td>
                                 <td class="text-center">{{ item.harvest_date }}</td>
                                 <td class="text-center">{{ item.expired_date }}</td>
-                                <td class="text-right">{{ item.initial_quantity }} kg</td>
+                                <td class="text-center">B{{ item.inventory_batch_id|stringformat:"03d" }}</td>
+                                <td>{{ item.commodity_id }}</td>
                                 <td class="text-right">{{ item.remaining_quantity }} kg</td>
                                 <td class="text-center">{{ item.source }}</td>
                                 <td class="text-center">

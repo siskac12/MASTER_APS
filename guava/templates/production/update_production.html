@@ -20,15 +20,16 @@
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label" for="product">product</label>
                     <div class="col-sm-9">
-                        <select class="form-control" name="product_id" id="product_id">
+                        <select class="form-control" disabled>
                             {% for item in products %}
-                            {% if item.product_id == detail.product_id.product_id %}
-                            <option selected value="{{item.product_id}}">{{item}}</option>
-                            {% else %}
-                            <option value="{{item.product_id}}">{{item}}</option>
-                            {% endif %}
+                                {% if item.product_id == detail.product_id.product_id %}
+                                <option selected value="{{item.product_id}}">{{item}}</option>
+                                {% else %}
+                                <option value="{{item.product_id}}">{{item}}</option>
+                                {% endif %}
                             {% endfor %}
                         </select>
+                        <input type="hidden" name="product_id" value="{{detail.product_id.product_id}}">
                     </div>
                 </div>
 
@@ -47,7 +48,7 @@
 
                     <label class="col-sm-3 col-form-label"  for="date">Date</label>
                     <div class="col-sm-9">
-                        <input class="form-control" type="date" value="{{production_date}}" name="date" id="date" required>
+                        <input class="form-control" value="{{production_date}}" name="date" id="date" aria-readonly="True">
 
                     </div>
                 </div>
@@ -55,7 +56,7 @@
                 <div class="form-group row">
                     <label class="col-sm-3 col-form-label"  for="product_quantity">Quantity</label>
                     <div class="col-sm-9">
-                        <input class="form-control" type="number"  value="{{detail.product_quantity}}" name="product_quantity" id="product_quantity" required>
+                        <input class="form-control" type="number"  value="{{detail.product_quantity}}" name="product_quantity" id="product_quantity" aria-readonly="true">
                     </div>
                 </div>
          
