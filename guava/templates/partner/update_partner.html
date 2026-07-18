@@ -7,7 +7,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_partner' %}">Data Partner</a></li>
-            <li class="breadcrumb-item"><a href="{%  url 'update_partner' item.partner_id % }">Update partner</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'update_partner' partner_obj.partner_id %}">Update partner</a></li>
         </ol>
     </nav>
 </div>

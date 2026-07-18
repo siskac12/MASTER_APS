@@ -17,46 +17,43 @@
             <h3 class="card-title">Update Data</h3>
             <form class="form-sample"  method="post">
                 {% csrf_token %}
+                <style>
+                    .readonly-production-field {
+                        background-color: #2A3038 !important;
+                        border-color: #2c2e33 !important;
+                        color: #ffffff !important;
+                        opacity: 1;
+                    }
+                </style>
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label" for="product">product</label>
-                    <div class="col-sm-9">
-                        <select class="form-control" disabled>
-                            {% for item in products %}
-                                {% if item.product_id == detail.product_id.product_id %}
-                                <option selected value="{{item.product_id}}">{{item}}</option>
-                                {% else %}
-                                <option value="{{item.product_id}}">{{item}}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                        <input type="hidden" name="product_id" value="{{detail.product_id.product_id}}">
-                    </div>
-                </div>
-
-                <div class="form-group row">
-                    <label class="col-sm-3 col-form-label"  for="status">Status product</label>
-
-                    <div class="col-sm-9">
-                        <select class="form-control" name="status" required>
-                            <option value="Processing" {% if detail.status == "Processing" %}selected{% endif %}>Processing</option>
-                            <option value="Completed" {% if detail.status == "Completed" %}selected{% endif %}>Completed</option>
-                            <option value="Cancelled" {% if detail.status == "Cancelled" %}selected{% endif %}>Cancelled</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-group row">
-
                     <label class="col-sm-3 col-form-label"  for="date">Date</label>
                     <div class="col-sm-9">
-                        <input class="form-control" value="{{production_date}}" name="date" id="date" aria-readonly="True">
-
+                        <input class="form-control readonly-production-field" value="{{ detail.production_id.date }}" id="date" readonly>
                     </div>
                 </div>
 
                 <div class="form-group row">
-                    <label class="col-sm-3 col-form-label"  for="product_quantity">Quantity</label>
+                    <label class="col-sm-3 col-form-label" for="product">Product</label>
                     <div class="col-sm-9">
-                        <input class="form-control" type="number"  value="{{detail.product_quantity}}" name="product_quantity" id="product_quantity" aria-readonly="true">
+                        <input class="form-control readonly-production-field" value="{{ detail.product_id.product_name }}" id="product" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label"  for="product_quantity">Product Quantity</label>
+                    <div class="col-sm-9">
+                        <input class="form-control readonly-production-field" type="number" value="{{ detail.product_quantity }}" id="product_quantity" readonly>
+                    </div>
+                </div>
+
+                <div class="form-group row">
+                    <label class="col-sm-3 col-form-label" for="status">Status Product</label>
+                    <div class="col-sm-9">
+                        <select class="form-control" name="status" id="status" required>
+                            {% for status in status_choices %}
+                            <option value="{{ status }}" {% if detail.status == status %}selected{% endif %}>{{ status }}</option>
+                            {% endfor %}
+                        </select>
                     </div>
                 </div>
          

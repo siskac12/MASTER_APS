@@ -8,7 +8,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_grade' %}">Data Grade</a></li>
-            <li class="breadcrumb-item"><a href="{%  url 'update_grade' item.grade_id % }">Update grade</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'update_grade' gradeobj.grade_id %}">Update grade</a></li>
         </ol>
     </nav>
 </div>

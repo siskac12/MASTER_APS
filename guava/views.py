@@ -1645,16 +1645,17 @@ def update_sale_product(request, id):
     today = datetime.now().date()
 
     if product.product_id != old_product.product_id:
-        restore_inventory(sale_product=detail)
-
         commodity = product.commodity_id
         new_qty = product.commodity_quantity * Decimal(quantity)
+        old_qty = old_product.commodity_quantity * Decimal(old_quantity)
 
         stock = models.InventoryBatch.objects.filter(
             commodity_id=commodity,
             remaining_quantity__gt=0,
             expired_date__gte=today,
         ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
+        if commodity.commodity_id == old_product.commodity_id.commodity_id:
+            stock += old_qty
 
         if stock < new_qty:
             messages.error(
@@ -1663,6 +1664,7 @@ def update_sale_product(request, id):
             )
             return redirect("update_sale_product", id=id)
 
+        restore_inventory(sale_product=detail)
         update_inventory(commodity, new_qty, sale_product=detail)
 
     elif quantity != old_quantity:
@@ -1697,6 +1699,28 @@ def update_sale_product(request, id):
     detail.product_id = product
     detail.product_quantity = quantity
     detail.save()
+
+    if production_detail:
+        production_detail.product_id = product
+        production_detail.product_quantity = quantity
+        production_detail.save()
+        production_detail.production_id.date = new_sale_date
+        production_detail.production_id.save()
+
+    category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Production Cost",
+        defaults={"type": "Expense"}
+    )
+    models.Transaction.objects.update_or_create(
+        reference_type="Production",
+        reference_id=detail.sale_product_id,
+        defaults={
+            "category_id": category,
+            "date": new_sale_date,
+            "description": f"Production cost for {product.product_name} x {quantity}",
+            "amount": product.production_cost * quantity,
+        }
+    )
 
     models.ActivityLog.objects.create(
         user=request.user,
@@ -1823,7 +1847,6 @@ def update_sale_commodity(request, id):
     today = datetime.now().date()
 
     if commodity.commodity_id != old_commodity.commodity_id:
-        restore_inventory(sale_commodity=detail)
         stock = (
             models.InventoryBatch.objects.filter(
                 commodity_id=commodity,
@@ -1840,6 +1863,7 @@ def update_sale_commodity(request, id):
             )
             return redirect("update_sale_commodity", id=id)
 
+        restore_inventory(sale_commodity=detail)
         update_inventory(
             commodity,
             quantity,
@@ -1979,15 +2003,22 @@ def update_production(request, id):
         messages.error(request, "Production detail not found!")
         return redirect("read_production")
 
+    status_choices = [choice[0] for choice in models.PRODUCTION_STATUS_CHOICES]
+
     if request.method == "GET":
         return render(request, "production/update_production.html", {
             "detail": detail,
+            "status_choices": status_choices,
         })
 
-    # status = request.POST.get("status")
+    status = request.POST.get("status")
 
     if not status:
         messages.error(request, "Status is required!")
+        return redirect("update_production", id=id)
+
+    if status not in status_choices:
+        messages.error(request, "Selected status is invalid!")
         return redirect("update_production", id=id)
 
     old_status = detail.status

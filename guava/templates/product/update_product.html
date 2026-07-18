@@ -6,7 +6,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_product' %}">Data product</a></li>
-            <li class="breadcrumb-item"><a href="{%  url 'update_product' item.product_id % }">Update Product</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'update_product' product.product_id %}">Update Product</a></li>
         </ol>
     </nav>
 </div>

@@ -6,7 +6,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'read_market' %}">Data Market</a></li>
-            <li class="breadcrumb-item"><a href="{%  url 'update_market' item.market_id % }">Update Market</a></li>
+            <li class="breadcrumb-item"><a href="{% url 'update_market' market.market_id %}">Update Market</a></li>
         </ol>
     </nav>
 </div>
