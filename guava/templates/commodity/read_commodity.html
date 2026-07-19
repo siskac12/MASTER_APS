@@ -7,7 +7,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item "><a href="{% url 'read_commodity' %}">Data commodity</a></li>
-            {% if is_owner or is_admin %}
+            {% if is_owner %}
           <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_commodity' %}">Create commodity</a></li>
             {% endif %}
         </ol>
@@ -27,7 +27,9 @@
                             <th class="text-center">Shelf Life</th>
                             <th class="text-center">Purchasing Price</th>
                             <th class="text-center">Selling Price</th>
+                            {% if is_owner %}
                             <th class="text-center">Action</th>
+                            {% endif %}
                         </tr>
                     </thead>
                     <tbody class="table-dark">
@@ -39,14 +41,12 @@
                             <td class="text-center">{{ i.shelf_life}} hari</td>
                             <td class="text-right">Rp{{ i.purchase_price }}</td>
                             <td class="text-right">Rp{{ i.selling_price }}</td>
-                            {% if is_owner or is_admin %}
+                            {% if is_owner %}
                             <td class="text-center">
                                 <a href="{% url 'update_commodity' i.commodity_id %}"><button class="btn-inverse-warning btn-icon-text btn-sm mr-2">
                                     <i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update commodity</button></a>
-                                {% if is_owner %}
                                 <a href="{% url 'delete_commodity' i.commodity_id %}"><button class="btn-inverse-danger btn-icon-text btn-sm">
                                     <i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete commodity</button></a>
-                                {% endif %}
                             </td>
                             {% endif %}
                         </tr>

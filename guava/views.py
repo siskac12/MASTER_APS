@@ -350,7 +350,7 @@ def delete_partner(request, id):
     return redirect('read_partner')
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@role_required(['owner'])
 def create_grade(request):
     if request.method == "GET":
         return render(request, 'grade/create_grade.html')
@@ -386,7 +386,7 @@ def read_grade(request):
     return render(request, 'grade/read_grade.html', {'gradeobj': gradeobj})
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@role_required(['owner'])
 def update_grade(request, id):
     try:
         grade_obj = models.Grade.objects.get(grade_id=id)
@@ -441,7 +441,7 @@ def delete_grade(request, id):
     return redirect('read_grade')
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@role_required(['owner'])
 def create_commodity(request):
     grade_obj = models.Grade.objects.all()
     
@@ -503,7 +503,7 @@ def read_commodity(request):
     })
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@role_required(['owner'])
 def update_commodity(request, id):
     grade_obj = models.Grade.objects.all()
     commodity = models.Commodity.objects.get(commodity_id=id)
@@ -581,7 +581,7 @@ def delete_commodity(request, id):
     return redirect('read_commodity')
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@role_required(['owner'])
 def create_product(request):
 
     commodity_obj = models.Commodity.objects.filter(
@@ -635,7 +635,7 @@ def read_product(request):
 
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@role_required(['owner'])
 def update_product(request, id):
     try:
         product = models.Product.objects.get(product_id=id)

@@ -12,7 +12,7 @@
     </div>
     <ul class="nav">
       
-     {% if is_owner or is_admin %}
+      {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
         <a class="nav-link" href="{% url 'base' %}">
           <span class="menu-icon">
@@ -22,44 +22,6 @@
         </a>
       </li>
       {% endif %}
-
-
-      {% if is_owner or is_admin or is_inspection %}
-      <li class="nav-item menu-items">
-        <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
-          <span class="menu-icon">
-            <i class="mdi mdi-account-multiple-outline"></i>
-          </span>
-          <span class="menu-title">Partner</span>
-          <i class="menu-arrow"></i>
-        </a>
-        <div class="collapse" id="ui-basic">
-          <ul class="nav flex-column sub-menu">
-  
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'read_partner' %}">
-                    <span>
-                        <i class="mdi mdi-account-outline mr-2"></i>
-                    </span>
-                    <span>Data partner</span>
-                </a>
-            </li>
-       
-            {% if is_owner or is_admin %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'create_partner' %}">
-                <span>
-                  <i class="mdi mdi-account-multiple-plus mr-2"></i>
-                </span>
-                <span>Add Partner</span>
-              </a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      {% endif %}
-
 
       {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
@@ -80,9 +42,9 @@
                     <span>Data Grade</span>
                 </a>
             </li>
-            {% if is_owner or is_admin %}
+            {% if is_owner %}
             <li class="nav-item">
-                 <a class="nav-link" href="{% url 'create_grade' %}">
+                <a class="nav-link" href="{% url 'create_grade' %}">
                     <span>
                         <i class="mdi mdi-plus mr-2"></i>
                     </span>
@@ -114,14 +76,82 @@
                     <span>Data Commodity</span>
                 </a>
             </li>
-            {% if is_owner or is_admin %}
+            {% if is_owner %}
             <li class="nav-item">
-                 <a class="nav-link" href="{% url 'create_commodity' %}">
+                <a class="nav-link" href="{% url 'create_commodity' %}">
                     <span>
                         <i class="mdi mdi-plus mr-2"></i>
                     </span>
                     <span>Add Commodity</span>
                 </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic3" aria-expanded="false" aria-controls="ui-basic3">
+          <span class="menu-icon">
+            <i class="mdi mdi-food"></i>
+          </span>
+          <span class="menu-title">Product</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic3">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'read_product' %}">
+                    <span>
+                        <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                    </span>
+                    <span>Data Product</span>
+                </a>
+            </li>
+            {% if is_owner %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'create_product' %}">
+                    <span>
+                        <i class="mdi mdi-plus  mr-2"></i>
+                    </span>
+                    <span>Add Product</span>
+                </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+
+      {% if is_owner or is_admin or is_inspection %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic" aria-expanded="false" aria-controls="ui-basic">
+          <span class="menu-icon">
+            <i class="mdi mdi-account-multiple-outline"></i>
+          </span>
+          <span class="menu-title">Partner</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'read_partner' %}">
+                    <span>
+                        <i class="mdi mdi-account-outline mr-2"></i>
+                    </span>
+                    <span>Data partner</span>
+                </a>
+            </li>
+            {% if is_owner or is_admin %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_partner' %}">
+                <span>
+                  <i class="mdi mdi-account-multiple-plus mr-2"></i>
+                </span>
+                <span>Add Partner</span>
+              </a>
             </li>
             {% endif %}
           </ul>
@@ -190,72 +220,6 @@
       </li>
       {% endif %}
 
-      {% if is_owner or is_admin %}
-      <li class="nav-item menu-items">
-        <a class="nav-link" data-toggle="collapse" href="#ui-basic3" aria-expanded="false" aria-controls="ui-basic3">
-          <span class="menu-icon">
-            <i class="mdi mdi-food"></i>
-          </span>
-          <span class="menu-title">Product</span>
-          <i class="menu-arrow"></i>
-        </a>
-        <div class="collapse" id="ui-basic3">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'read_product' %}">
-                    <span>
-                        <i class="mdi mdi-format-list-bulleted mr-2"></i>
-                    </span>
-                    <span>Data Product</span>
-                </a>
-            </li>
-            {% if is_owner or is_admin %}
-            <li class="nav-item">
-                 <a class="nav-link" href="{% url 'create_product' %}">
-                    <span>
-                        <i class="mdi mdi-plus  mr-2"></i>
-                    </span>
-                    <span>Add Product</span>
-                </a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      {% endif %}
-      {% if is_owner or is_admin %}
-      <li class="nav-item menu-items">
-        <a class="nav-link" data-toggle="collapse" href="#ui-basic5" aria-expanded="false" aria-controls="ui-basic5">
-          <span class="menu-icon">
-            <i class="mdi mdi-store"></i>
-          </span>
-          <span class="menu-title">Market</span>
-          <i class="menu-arrow"></i>
-        </a>
-        <div class="collapse" id="ui-basic5">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-                <a class="nav-link" href="{% url 'read_market' %}">
-                    <span>
-                        <i class="mdi mdi-format-list-bulleted mr-2"></i>
-                    </span>
-                    <span>Data Market</span>
-                </a>
-            </li>
-            {% if is_owner or is_admin %}
-            <li class="nav-item">
-                 <a class="nav-link" href="{% url 'create_market' %}">
-                    <span>
-                        <i class="mdi mdi-plus  mr-2"></i>
-                    </span>
-                    <span>Add Market</span>
-                </a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      {% endif %}
       {% if is_owner or is_admin or is_production %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic7" aria-expanded="false" aria-controls="ui-basic7">
@@ -279,6 +243,143 @@
         </div>
       </li>
       {% endif %}
+
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic5" aria-expanded="false" aria-controls="ui-basic5">
+          <span class="menu-icon">
+            <i class="mdi mdi-store"></i>
+          </span>
+          <span class="menu-title">Market</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic5">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'read_market' %}">
+                    <span>
+                        <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                    </span>
+                    <span>Data Market</span>
+                </a>
+            </li>
+            {% if is_owner or is_admin %}
+            <li class="nav-item">
+                <a class="nav-link" href="{% url 'create_market' %}">
+                    <span>
+                        <i class="mdi mdi-plus  mr-2"></i>
+                    </span>
+                    <span>Add Market</span>
+                </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic6" aria-expanded="false" aria-controls="ui-basic6">
+          <span class="menu-icon">
+            <i class="mdi mdi-cart"></i>
+          </span>
+          <span class="menu-title">Sales</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic6">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_sale' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Sales</span>
+              </a>
+            </li>
+            {% if is_owner or is_admin %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_sale' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Sales</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic8" aria-expanded="false" aria-controls="ui-basic8">
+          <span class="menu-icon">
+            <i class="mdi mdi-format-list-bulleted-type"></i>
+          </span>
+          <span class="menu-title">Transaction Category</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic8">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_transactioncategory' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Category</span>
+              </a>
+            </li>
+            {% if is_owner or is_admin %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_transactioncategory' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Category</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic9" aria-expanded="false" aria-controls="ui-basic9">
+          <span class="menu-icon">
+            <i class="mdi mdi-cash-multiple"></i>
+          </span>
+          <span class="menu-title">Transaction</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic9">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_transaction' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Transaction</span>
+              </a>
+            </li>
+            {% if is_owner or is_admin %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_transaction' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Transaction</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+
       {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic10" aria-expanded="false" aria-controls="ui-basic10">
@@ -326,105 +427,7 @@
         </div>
       </li>
       {% endif %}
-      {% if is_owner or is_admin %}
-      <li class="nav-item menu-items">
-        <a class="nav-link" data-toggle="collapse" href="#ui-basic9" aria-expanded="false" aria-controls="ui-basic9">
-          <span class="menu-icon">
-            <i class="mdi mdi-cash-multiple"></i>
-          </span>
-          <span class="menu-title">Transaction</span>
-          <i class="menu-arrow"></i>
-        </a>
-        <div class="collapse" id="ui-basic9">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'read_transaction' %}">
-                <span>
-                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
-                </span>
-                <span>Data Transaction</span>
-              </a>
-            </li>
-            {% if is_owner or is_admin %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'create_transaction' %}">
-                <span>
-                  <i class="mdi mdi-plus mr-2"></i>
-                </span>
-                <span>Add Transaction</span>
-              </a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      {% endif %}
-      {% if is_owner or is_admin %}
-      <li class="nav-item menu-items">
-        <a class="nav-link" data-toggle="collapse" href="#ui-basic8" aria-expanded="false" aria-controls="ui-basic8">
-          <span class="menu-icon">
-            <i class="mdi mdi-format-list-bulleted-type"></i>
-          </span>
-          <span class="menu-title">Transaction Category</span>
-          <i class="menu-arrow"></i>
-        </a>
-        <div class="collapse" id="ui-basic8">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'read_transactioncategory' %}">
-                <span>
-                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
-                </span>
-                <span>Data Category</span>
-              </a>
-            </li>
-            {% if is_owner or is_admin %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'create_transactioncategory' %}">
-                <span>
-                  <i class="mdi mdi-plus mr-2"></i>
-                </span>
-                <span>Add Category</span>
-              </a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      {% endif %}
-      {% if is_owner or is_admin %}
-      <li class="nav-item menu-items">
-        <a class="nav-link" data-toggle="collapse" href="#ui-basic6" aria-expanded="false" aria-controls="ui-basic6">
-          <span class="menu-icon">
-            <i class="mdi mdi-cart"></i>
-          </span>
-          <span class="menu-title">Sales</span>
-          <i class="menu-arrow"></i>
-        </a>
-        <div class="collapse" id="ui-basic6">
-          <ul class="nav flex-column sub-menu">
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'read_sale' %}">
-                <span>
-                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
-                </span>
-                <span>Data Sales</span>
-              </a>
-            </li>
-            {% if is_owner or is_admin %}
-            <li class="nav-item">
-              <a class="nav-link" href="{% url 'create_sale' %}">
-                <span>
-                  <i class="mdi mdi-plus mr-2"></i>
-                </span>
-                <span>Add Sales</span>
-              </a>
-            </li>
-            {% endif %}
-          </ul>
-        </div>
-      </li>
-      {% endif %}
+
       {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
           <a class="nav-link" href="{% url 'activity_logs' %}">
