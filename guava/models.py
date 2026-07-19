@@ -20,7 +20,7 @@ class Partner(models.Model):
     land_area = models.PositiveIntegerField(null=True)
     partner_status = models.CharField(max_length=20, choices=PARTNER_STATUS_CHOICES, default="Pending")
     email = models.EmailField() 
-    dokumen = models.FileField() 
+    document = models.FileField() 
     inspection_notes = models.TextField(blank=True, null=True) 
 
     def __str__(self):
