@@ -7,7 +7,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item "><a href="{% url 'read_market' %}">Data market</a></li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
           <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_market' %}">Create market</a></li>
             {% endif %}
         </ol>
@@ -25,7 +25,7 @@
                             <th class="text-center">Market Name</th>
                             <th class="text-center">Market Address</th>
                             <th class="text-center">Phone Number</th>
-                            {% if is_owner %}
+                            {% if is_owner or is_admin %}
                             <th class="text-center">Action</th>
                             {% endif %}
                         </tr>
@@ -37,12 +37,14 @@
                             <td>{{ i.market_name }}</td>
                             <td>{{ i.market_address }}</td>
                             <td>{{ i.phone_number }}</td>
-                            {% if is_owner %}
+                            {% if is_owner or is_admin %}
                             <td class="text-center">
                                 <a href="{% url 'update_market' i.market_id %}"><button class="btn-inverse-warning btn-icon-text btn-sm mr-2">
                                     <i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update market</button></a>
+                                {% if is_owner %}
                                 <a href="{% url 'delete_market' i.market_id %}"><button class="btn-inverse-danger btn-icon-text btn-sm">
                                     <i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete market</button></a>
+                                {% endif %}
                             </td>
                             {% endif %}
                         </tr>

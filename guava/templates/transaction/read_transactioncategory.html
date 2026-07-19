@@ -6,7 +6,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'read_transactioncategory' %}">Data Transaction Category</a></li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'create_transactioncategory' %}">Create Transaction Category</a></li>
             {% endif %}
         </ol>
@@ -23,7 +23,7 @@
                                 <th>No</th>
                                 <th>Category Name</th>
                                 <th>Type</th>
-                                {% if is_owner %}
+                                {% if is_owner or is_admin %}
                                 <th>Action</th>
                                 {% endif %}
                             </tr>
@@ -34,18 +34,20 @@
                                 <td>{{ forloop.counter }}</td>
                                 <td>{{ item.category_name }}</td>
                                 <td>{{ item.type }}</td>
-                                {% if is_owner %}
+                                {% if is_owner or is_admin %}
                                 <td>
                                     <a href="{% url 'update_transactioncategory' item.category_id %}">
                                         <button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2">
                                             <i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update
                                         </button>
+                                    {% if is_owner %}
                                     </a>
                                     <a href="{% url 'delete_transactioncategory' item.category_id %}">
                                         <button class="btn btn-inverse-danger btn-icon-text btn-sm">
                                             <i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete
                                         </button>
                                     </a>
+                                    {% endif %}
                                 </td>
                                 {% endif %}
                             </tr>

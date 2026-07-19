@@ -25,7 +25,7 @@
                                 <th class="text-center">Harvest Date</th>
                                 <th class="text-center">Commodity</th>
                                 <th class="text-center">Quantity</th>
-                                {% if is_owner or is_admin %}
+                                {% if is_owner or is_admin or is_inspection %}
                                 <th class="text-center">Action</th>
                                 {% endif %}
                             </tr>
@@ -39,7 +39,7 @@
                                 <td class="text-center">{{ item.partner_harvest_id.harvest_date }}</td>
                                 <td>{{ item.commodity_id }}</td>
                                 <td class="text-right">{{ item.quantity }} kg</td>
-                                {% if is_owner or is_admin %}
+                                {% if is_owner or is_admin or is_inspection %}
                                 <td class="text-center">
                                    <a href="{% url 'update_partner_harvest' item.partner_harvest_detail_id %}"><button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
                                    {% if is_owner %}

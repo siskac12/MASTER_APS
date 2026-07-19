@@ -61,7 +61,7 @@
       {% endif %}
 
 
-      {% if is_owner or is_admin or is_inspection %}
+      {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic11" aria-expanded="false" aria-controls="ui-basic11">
           <span class="menu-icon">
@@ -80,7 +80,7 @@
                     <span>Data Grade</span>
                 </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
                  <a class="nav-link" href="{% url 'create_grade' %}">
                     <span>
@@ -95,7 +95,7 @@
       </li>
       {% endif %}
 
-      {% if is_owner or is_admin or is_inspection %}
+      {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic2" aria-expanded="false" aria-controls="ui-basic2">
           <span class="menu-icon">
@@ -114,7 +114,7 @@
                     <span>Data Commodity</span>
                 </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
                  <a class="nav-link" href="{% url 'create_commodity' %}">
                     <span>
@@ -156,7 +156,7 @@
                 <span>Local Harvest</span>
               </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'create_partner_harvest' %}">
                 <span>
@@ -179,7 +179,7 @@
       </li>
       {% endif %}
 
-      {% if is_owner or is_admin or is_inspection %}
+      {% if is_owner or is_admin or is_production %}
       <li class="nav-item menu-items">
           <a class="nav-link" href="{% url 'read_inventory' %}">
               <span class="menu-icon">
@@ -209,7 +209,7 @@
                     <span>Data Product</span>
                 </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
                  <a class="nav-link" href="{% url 'create_product' %}">
                     <span>
@@ -242,7 +242,7 @@
                     <span>Data Market</span>
                 </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
                  <a class="nav-link" href="{% url 'create_market' %}">
                     <span>
@@ -345,7 +345,7 @@
                 <span>Data Transaction</span>
               </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'create_transaction' %}">
                 <span>
@@ -359,7 +359,7 @@
         </div>
       </li>
       {% endif %}
-      {% if is_owner or is_admin or is_inspection %}
+      {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic8" aria-expanded="false" aria-controls="ui-basic8">
           <span class="menu-icon">
@@ -378,7 +378,7 @@
                 <span>Data Category</span>
               </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'create_transactioncategory' %}">
                 <span>
@@ -411,7 +411,7 @@
                 <span>Data Sales</span>
               </a>
             </li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="nav-item">
               <a class="nav-link" href="{% url 'create_sale' %}">
                 <span>
@@ -425,7 +425,7 @@
         </div>
       </li>
       {% endif %}
-      {% if is_owner or is_admin or is_inspection %}
+      {% if is_owner or is_admin %}
       <li class="nav-item menu-items">
           <a class="nav-link" href="{% url 'activity_logs' %}">
               <span class="menu-icon">

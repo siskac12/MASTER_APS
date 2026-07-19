@@ -279,7 +279,7 @@ def read_partner(request):
     })
 
 @login_required(login_url="login")
-@role_required(["owner", "admin"])
+@role_required(["owner", "admin", "inspection"])
 def update_partner(request, id):
     try:
         partner_obj = models.Partner.objects.get(partner_id=id)
@@ -350,7 +350,7 @@ def delete_partner(request, id):
     return redirect('read_partner')
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def create_grade(request):
     if request.method == "GET":
         return render(request, 'grade/create_grade.html')
@@ -380,13 +380,13 @@ def create_grade(request):
         return redirect("read_grade")
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin', 'inspection'])
+@role_required(['owner', 'admin'])
 def read_grade(request):
     gradeobj = models.Grade.objects.all()
     return render(request, 'grade/read_grade.html', {'gradeobj': gradeobj})
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def update_grade(request, id):
     try:
         grade_obj = models.Grade.objects.get(grade_id=id)
@@ -441,7 +441,7 @@ def delete_grade(request, id):
     return redirect('read_grade')
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def create_commodity(request):
     grade_obj = models.Grade.objects.all()
     
@@ -492,7 +492,7 @@ def create_commodity(request):
         return redirect('read_commodity')
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin', 'inspection'])
+@role_required(['owner', 'admin'])
 def read_commodity(request):
     commodity_obj = models.Commodity.objects.all()
     if not commodity_obj.exists():
@@ -503,7 +503,7 @@ def read_commodity(request):
     })
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def update_commodity(request, id):
     grade_obj = models.Grade.objects.all()
     commodity = models.Commodity.objects.get(commodity_id=id)
@@ -581,7 +581,7 @@ def delete_commodity(request, id):
     return redirect('read_commodity')
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def create_product(request):
 
     commodity_obj = models.Commodity.objects.filter(
@@ -623,7 +623,7 @@ def create_product(request):
 
 
 @login_required(login_url='login')
-@role_required(['owner', 'admin', 'production'])
+@role_required(['owner', 'admin'])
 def read_product(request):
     product_obj = models.Product.objects.all()
     if not product_obj.exists():
@@ -635,7 +635,7 @@ def read_product(request):
 
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def update_product(request, id):
     try:
         product = models.Product.objects.get(product_id=id)
@@ -712,7 +712,7 @@ def delete_product(request, id):
     return redirect('read_product')
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def create_market(request):
     if request.method == 'GET':
         return render(request, 'market/create_market.html')
@@ -753,7 +753,7 @@ def read_market(request):
     })
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def update_market(request, id):
     market = models.Market.objects.get(market_id=id)
     if request.method == 'GET':
@@ -808,7 +808,7 @@ def delete_market(request, id):
 
 
 @login_required(login_url="login")
-@role_required(["owner", "admin"])
+@role_required(["owner", "admin", "inspection"])
 def read_partner_harvest(request):
     harvest_qs = models.PartnerHarvestDetail.objects.select_related(
         "partner_harvest_id__partner_id",
@@ -824,7 +824,7 @@ def read_partner_harvest(request):
 
 
 @login_required(login_url="login")
-@role_required(["owner"])
+@role_required(["owner", 'admin'])
 def create_partner_harvest(request):
     all_partners = models.Partner.objects.filter(partner_status="Active")
     all_commodities = models.Commodity.objects.all()
@@ -1126,7 +1126,7 @@ def read_local_harvest(request):
 
 
 @login_required(login_url="login")
-@role_required(["owner"])
+@role_required(["owner", "admin"])
 def create_local_harvest(request):
     all_commodities = models.Commodity.objects.all()
 
@@ -1330,7 +1330,7 @@ def delete_local_harvest(request, id):
     return redirect("read_local_harvest")
 
 @login_required(login_url="login")
-@role_required(["owner", "admin", "inspection"])
+@role_required(["owner", "admin", "production"])
 def read_inventory(request):
     inventory_qs = models.InventoryBatch.objects.select_related(
         "commodity_id__grade_id",
@@ -1438,7 +1438,7 @@ def reduce_inventory(sale_commodity=None, sale_product=None, amount=Decimal("0")
         remaining -= cut
 
 @login_required(login_url="login")
-@role_required(["owner"])
+@role_required(["owner", "admin"])
 def create_sale(request):
     market_obj = models.Market.objects.all()
     product_obj = models.Product.objects.all()
@@ -2482,58 +2482,7 @@ def total_commodities(request):
     })
 
 @login_required(login_url='login')
-@role_required(['owner'])
-def create_commodity(request):
-    grade_obj = models.Grade.objects.all()
-    
-    if request.method == 'GET':
-        return render(request, 'commodity/create_commodity.html', {
-            'grade_obj': grade_obj
-        })
-    
-    else:
-        grade_name = request.POST['grade_name']
-        commodity_name = request.POST['commodity_name']
-        shelf_life = request.POST['shelf_life']
-        purchase_price = request.POST['purchase_price']
-        selling_price = request.POST['selling_price']
-
-        commodity_obj = models.Commodity.objects.filter(
-            commodity_name=commodity_name,
-            grade_id__grade_name=grade_name
-        )
-
-        if commodity_obj.exists():
-            messages.error(request, "Commodity already exists!")
-        
-        else:
-            grade_instance = models.Grade.objects.get(grade_name=grade_name)
-            data = models.Commodity(
-                grade_id=grade_instance,
-                commodity_name=commodity_name,
-                shelf_life = shelf_life,
-                purchase_price=purchase_price,
-                selling_price=selling_price,
-            )
-            data.save()
-
-            models.ActivityLog(
-                user=request.user,
-                action="Add Commodity",
-                description=(
-                    f"Added new commodity: {data.commodity_name}, "
-                    f"Grade {data.grade_id.grade_name}, "
-                    f"Purchase {data.purchase_price}, "
-                    f"Selling {data.selling_price}."
-                )
-            ).save()
-
-            messages.success(request, "Commodity has been successfully added!")
-
-        return redirect('read_commodity')
-
-@login_required(login_url='login')
-@role_required(['owner', 'admin', 'inspection'])
+@role_required(['owner', 'admin'])
 def read_transactioncategory(request):
     category_obj = models.TransactionCategory.objects.all()
     if not category_obj.exists():
@@ -2544,7 +2493,7 @@ def read_transactioncategory(request):
     })
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def create_transactioncategory(request):
     if request.method == "GET":
         return render(request, 'transaction/create_transactioncategory.html')
@@ -2578,7 +2527,7 @@ def create_transactioncategory(request):
 
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def update_transactioncategory(request, id):
     try:
         category = models.TransactionCategory.objects.get(category_id=id)
@@ -2669,7 +2618,7 @@ def read_transaction(request):
 
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def create_transaction(request):
     category_obj = models.TransactionCategory.objects.all().order_by("category_name")
 
@@ -2721,7 +2670,7 @@ def create_transaction(request):
 
 
 @login_required(login_url='login')
-@role_required(['owner'])
+@role_required(['owner', 'admin'])
 def update_transaction(request, id):
     try:
         transaction = models.Transaction.objects.select_related("category_id").get(
@@ -2823,6 +2772,7 @@ def delete_transaction(request, id):
     return redirect("read_transaction")
 
 @login_required(login_url="login")
+@role_required(["owner", "admin"]) 
 def activity_logs(request):
     logs = models.ActivityLog.objects.all().order_by('-timestamp') 
     return render(request, 'log/activity_log.html', {'logs': logs})

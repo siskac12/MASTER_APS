@@ -25,7 +25,7 @@
                             <th class="text-center">Commodity Used</th>
                             <th class="text-center">Commodity Quantity</th>
                             <th class="text-center">Production Cost</th>
-                            {% if is_owner %}
+                            {% if is_owner or is_admin %}
                             <th class="text-center">Action</th>
                             {% endif %}
                         </tr>
@@ -39,12 +39,14 @@
                             <td>{{ i.commodity_id }}</td>
                             <td>{{ i.commodity_quantity }} kg</td>
                             <td class="text-right">Rp{{ i.production_cost }}</td>
-                            {% if is_owner %}
+                            {% if is_owner or is_admin %}
                             <td class="text-center">
                                 <a href="{% url 'update_product' i.product_id %}"><button class="btn-inverse-warning btn-icon-text btn-sm mr-2">
                                     <i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update product</button></a>
+                                {% if is_owner %}
                                 <a href="{% url 'delete_product' i.product_id %}"><button class="btn-inverse-danger btn-icon-text btn-sm">
                                     <i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete product</button></a>
+                                {% endif %}
                             </td>
                             {% endif %}
                         </tr>

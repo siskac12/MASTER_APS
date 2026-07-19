@@ -6,7 +6,7 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item"><a href="{% url 'read_sale' %}">Data Sales</a></li>
-            {% if is_owner %}
+            {% if is_owner or is_admin %}
             <li class="breadcrumb-item active" aria-current="page"><a class="text-muted" href="{% url 'create_sale' %}">Create Sale</a></li>
             {% endif %}
         </ol>

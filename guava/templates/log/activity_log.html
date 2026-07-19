@@ -13,7 +13,9 @@
                     <th style="width: 15%;">Activity</th>
                     <th style="width: 45%;">Description</th>
                     <th style="width: 20%;">Timestamp</th>
+                    {% if is_owner %}
                     <th style="width: 20%;">Action</th>
+                    {% endif %}
                 </tr>
             </thead>
             <tbody class="table-dark">
@@ -24,6 +26,7 @@
                     <td style="white-space: normal; word-break: break-word;">{{ log.action }}</td>
                     <td style="white-space: normal; word-break: break-word;">{{ log.description }}</td>
                     <td style="white-space: normal; word-break: break-word;">{{ log.timestamp|date:"d M Y H:i" }}</td>
+                    {% if is_owner %}
                     <td>
                         <form action="{% url 'delete_log' log.id %}" method="post" style="display:inline;">
                             {% csrf_token %}
@@ -32,6 +35,7 @@
                             </button>
                         </form>
                     </td>
+                    {% endif %}
                 </tr>
                 {% empty %}
                 <tr>

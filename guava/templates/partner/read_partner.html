@@ -33,7 +33,7 @@
                                     <th>Email</th>
                                     <th>Document</th>
                                     <th>Inspection Notes</th>
-                                    {% if is_owner or is_admin %}
+                                    {% if is_owner or is_admin or is_inspection %}
                                     <th class="text-center">Action</th>
                                     {% endif %}
                                 </tr>
@@ -59,9 +59,8 @@
                                         {% endif %}
                                     </td>
                                     <td>{{ item.inspection_notes }}</td>
-                                                                
                                     </td>
-                                    {% if is_owner or is_admin %}
+                                    {% if is_owner or is_admin or is_inspection %}
                                     <td>           
                                         <a href="{% url 'update_partner' item.partner_id %}"><button class="btn btn-inverse-warning btn-icon-text btn-sm mr-2"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
                                         {% if is_owner %}
