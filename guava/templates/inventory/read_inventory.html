@@ -42,9 +42,9 @@
                                 <td class="text-center">{{ item.source }}</td>
                                 <td class="text-center">
                                     {% if item.remaining_quantity <= 0 %}
-                                        <span class="badge badge-danger">Depleted</span>
+                                        <span class="badge badge-warning">Out of Stock</span>
                                     {% elif item.expired_date < today %}
-                                        <span class="badge badge-dark">Expired</span>
+                                        <span class="badge badge-secondary text-dark">Expired</span>
                                     {% else %}
                                         <span class="badge badge-success">Active</span>
                                     {% endif %}

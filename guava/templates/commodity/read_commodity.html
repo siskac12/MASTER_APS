@@ -24,6 +24,7 @@
                             <th class="text-center">No</th>
                             <th class="text-center">Commodity Name</th>
                             <th class="text-center">Grade</th>
+                            <th class="text-center">Shelf Life</th>
                             <th class="text-center">Purchasing Price</th>
                             <th class="text-center">Selling Price</th>
                             {% if is_owner %}
@@ -37,6 +38,7 @@
                             <td>{{ forloop.counter }}</td>
                             <td>{{ i.commodity_name }}</td>
                             <td class="text-center">{{ i.grade_id }}</td>
+                            <td class="text-center">{{ i.shelf_life}} hari</td>
                             <td class="text-right">Rp{{ i.purchase_price }}</td>
                             <td class="text-right">Rp{{ i.selling_price }}</td>
                             {% if is_owner %}

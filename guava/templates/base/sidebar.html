@@ -425,4 +425,14 @@
         </div>
       </li>
       {% endif %}
+      {% if is_owner or is_admin or is_inspection %}
+      <li class="nav-item menu-items">
+          <a class="nav-link" href="{% url 'activity_logs' %}">
+              <span class="menu-icon">
+                  <i class="mdi mdi-package-variant"></i>
+              </span>
+              <span class="menu-title">Activity Log</span>
+          </a>
+      </li>
+      {% endif %}
 </nav> 

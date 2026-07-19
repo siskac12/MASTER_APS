@@ -2822,20 +2822,20 @@ def delete_transaction(request, id):
     messages.success(request, "Transaction successfully deleted!")
     return redirect("read_transaction")
 
-# @login_required(login_url="login")
-# def activity_logs(request):
-#     logs = models.ActivityLog.objects.all().order_by('-timestamp') 
-#     return render(request, 'log/activity_log.html', {'logs': logs})
+@login_required(login_url="login")
+def activity_logs(request):
+    logs = models.ActivityLog.objects.all().order_by('-timestamp') 
+    return render(request, 'log/activity_log.html', {'logs': logs})
 
-# @login_required
-# @role_required(['owner'])  
-# def delete_log(request, id):
-#     try:
-#         log = models.ActivityLog.objects.get(id=id)
-#         log.delete()
-#         messages.success(request, "Log berhasil dihapus.")
-#     except models.ActivityLog.DoesNotExist:
-#         messages.error(request, "Log tidak ditemukan.")
-#     return redirect('activity_logs') 
+@login_required
+@role_required(['owner'])  
+def delete_log(request, id):
+    try:
+        log = models.ActivityLog.objects.get(id=id)
+        log.delete()
+        messages.success(request, "Log berhasil dihapus.")
+    except models.ActivityLog.DoesNotExist:
+        messages.error(request, "Log tidak ditemukan.")
+    return redirect('activity_logs') 
 
 

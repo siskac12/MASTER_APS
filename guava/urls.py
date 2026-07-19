@@ -63,20 +63,9 @@ urlpatterns = [
     path('delete_local_harvest/<str:id>', views.delete_local_harvest,name='delete_local_harvest'),
     # # READ INVENTORY
     path('read_inventory', views.read_inventory, name='read_inventory'),
-    # # CRUD BIAYA
-    # path('create_cost_type', views.create_cost_type,name='create_cost_type'),
-    # path('read_cost_type', views.read_cost_type,name='read_cost_type'),
-    # path('update_cost_type/<str:id>', views.update_cost_type,name='update_cost_type'),
-    # path('delete_cost_type/<str:id>', views.delete_cost_type,name='delete_cost_type'),
-    # path('create_cost_detail', views.create_cost_detail,name='create_cost_detail'),
-    # path('read_cost_detail', views.read_cost_detail,name='read_cost_detail'),
-    # path('update_cost_detail/<str:id>', views.update_cost_detail,name='update_cost_detail'),
-    # path('delete_cost_detail/<str:id>', views.delete_cost_detail,name='delete_cost_detail'),
     # # CRUD PRODUCTION
-    # path('create_production', views.create_production,name='create_production'),
     path('read_production', views.read_production,name='read_production'),
     path('update_production/<str:id>', views.update_production,name='update_production'),
-    # path('delete_production/<str:id>', views.delete_production,name='delete_production'),
     # # REPORT
     path('sales_report', views.sales_report,name='sales_report'),
     path('harvest_report', views.harvest_report,name='harvest_report'),
@@ -84,10 +73,7 @@ urlpatterns = [
     path('profit_and_loss_pdf/<str:bulan>', views.profit_and_loss_pdf,name='profit_and_loss_pdf'),
     # # ADD
     path('total_commodities/', views.total_commodities, name='total_commodities'),
-    # path('rekap_panen/', views.monthly_harvest_report, name='rekap-panen'),
-    # path('activity_logs/', views.activity_logs, name='activity_logs'),
-    # path('logs/delete/<int:id>/', views.delete_log, name='delete_log')
-
-
-
+    # # Activity Log
+    path('activity_logs/', views.activity_logs, name='activity_logs'),
+    path('logs/delete/<int:id>/', views.delete_log, name='delete_log')
 ]
