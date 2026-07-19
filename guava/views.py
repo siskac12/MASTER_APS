@@ -2,7 +2,8 @@ from django.shortcuts import render, redirect
 from . import models
 from datetime import datetime, timedelta
 import calendar
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
+from types import SimpleNamespace
 from django.http import HttpResponse
 from django.contrib import messages
 from django.contrib.auth import login , logout, authenticate
@@ -24,6 +25,98 @@ from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from django.views.decorators.csrf import csrf_exempt
 import json
+
+
+def parse_date_filter(value):
+    if not value:
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%d").date()
+    except ValueError:
+        return None
+
+
+def get_month_range(month_value):
+    if not month_value:
+        return None, None, None
+    try:
+        selected = datetime.strptime(month_value, "%Y-%m").date()
+    except ValueError:
+        return None, None, None
+    last_day = calendar.monthrange(selected.year, selected.month)[1]
+    start = selected.replace(day=1)
+    end = selected.replace(day=last_day)
+    month_name = selected.strftime("%B %Y")
+    return start, end, month_name
+
+
+def get_sales_revenue(start_date=None, end_date=None):
+    sales = models.Sale.objects.all()
+    if start_date:
+        sales = sales.filter(date__gte=start_date)
+    if end_date:
+        sales = sales.filter(date__lte=end_date)
+
+    sale_ids = sales.values_list("sale_id", flat=True)
+    product_total = sum(
+        item.product_id.selling_price * item.product_quantity
+        for item in models.SaleProduct.objects.select_related("product_id").filter(
+            sale_id__in=sale_ids
+        )
+    )
+    commodity_total = sum(
+        item.commodity_id.selling_price * item.commodity_quantity
+        for item in models.SaleCommodity.objects.select_related("commodity_id").filter(
+            sale_id__in=sale_ids
+        )
+    )
+    return product_total + commodity_total
+
+
+def build_profit_and_loss_context(month_value):
+    start_date, end_date, month_name = get_month_range(month_value)
+    if not start_date or not end_date:
+        return {"bulan": month_value}
+
+    transactions = models.Transaction.objects.select_related("category_id").filter(
+        date__gte=start_date,
+        date__lte=end_date,
+    )
+    categories = models.TransactionCategory.objects.all().order_by(
+        "type",
+        "category_name",
+    )
+    category_totals = {}
+    for transaction in transactions:
+        category_id = transaction.category_id_id
+        category_totals[category_id] = category_totals.get(category_id, 0) + transaction.amount
+
+    income_accounts = []
+    expense_accounts = []
+
+    for category in categories:
+        account = SimpleNamespace(
+            name=category.category_name,
+            amount=category_totals.get(category.category_id, 0),
+        )
+        if category.type == "Income":
+            income_accounts.append(account)
+        elif category.type == "Expense":
+            expense_accounts.append(account)
+
+    total_income = sum(account.amount for account in income_accounts)
+    total_expense = sum(account.amount for account in expense_accounts)
+    net_income = total_income - total_expense
+
+    return {
+        "bulan": month_value,
+        "month": month_name,
+        "income_accounts": income_accounts,
+        "expense_accounts": expense_accounts,
+        "total_income": total_income,
+        "total_expense": total_expense,
+        "net_income": net_income,
+    }
 
 
 # # Authentication Views
@@ -792,6 +885,32 @@ def create_partner_harvest(request):
                 source_detail_id=detail.partner_harvest_detail_id,
             )
 
+            category, _ = models.TransactionCategory.objects.get_or_create(
+                category_name="Partner Harvest Purchase",
+                type="Expense",
+            )
+            transaction_quantity = Decimal(str(detail.quantity))
+            transaction_amount = int(
+                (
+                    transaction_quantity * Decimal(detail.commodity_id.purchase_price)
+                ).quantize(
+                    Decimal("1"),
+                    rounding=ROUND_HALF_UP,
+                )
+            )
+            models.Transaction.objects.create(
+                category_id=category,
+                date=harvest.harvest_date,
+                description=(
+                    f"Partner harvest purchase from {partner_obj.partner_name}: "
+                    f"{detail.commodity_id} {transaction_quantity} kg x "
+                    f"Rp{detail.commodity_id.purchase_price}"
+                ),
+                amount=transaction_amount,
+                reference_type="PartnerHarvest",
+                reference_id=detail.partner_harvest_detail_id,
+            )
+
         if not saved_details:
             harvest.delete()
             messages.error(request, "No valid Partner Harvest detail data was saved!")
@@ -891,6 +1010,34 @@ def update_partner_harvest(request, id):
             batch.remaining_quantity = quantity
             batch.save()
 
+        category, _ = models.TransactionCategory.objects.get_or_create(
+            category_name="Partner Harvest Purchase",
+            type="Expense",
+        )
+        transaction_quantity = Decimal(str(detail_obj.quantity))
+        transaction_amount = int(
+            (
+                transaction_quantity * Decimal(detail_obj.commodity_id.purchase_price)
+            ).quantize(
+                Decimal("1"),
+                rounding=ROUND_HALF_UP,
+            )
+        )
+        models.Transaction.objects.update_or_create(
+            reference_type="PartnerHarvest",
+            reference_id=detail_obj.partner_harvest_detail_id,
+            defaults={
+                "category_id": category,
+                "date": harvest.harvest_date,
+                "description": (
+                    f"Partner harvest purchase from {partner_obj.partner_name}: "
+                    f"{detail_obj.commodity_id} {transaction_quantity} kg x "
+                    f"Rp{detail_obj.commodity_id.purchase_price}"
+                ),
+                "amount": transaction_amount,
+            },
+        )
+
         models.ActivityLog.objects.create(
             user=request.user,
             action="Update Partner Harvest",
@@ -945,6 +1092,11 @@ def delete_partner_harvest(request, id):
             f"{commodity}, {quantity} kg."
         )
     )
+
+    models.Transaction.objects.filter(
+        reference_type="PartnerHarvest",
+        reference_id=detail_obj.partner_harvest_detail_id,
+    ).delete()
 
     detail_obj.delete()
     if not models.PartnerHarvestDetail.objects.filter(partner_harvest_id=harvest).exists():
@@ -1402,9 +1554,17 @@ def create_sale(request):
         date=sale_date,
     )
 
-    category, _ = models.TransactionCategory.objects.get_or_create(
+    production_cost_category, _ = models.TransactionCategory.objects.get_or_create(
         category_name="Production Cost",
         defaults={"type": "Expense"}
+    )
+    product_sale_category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Product Sale",
+        defaults={"type": "Income"}
+    )
+    commodity_sale_category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Commodity Sale",
+        defaults={"type": "Income"}
     )
 
     production = None
@@ -1434,11 +1594,19 @@ def create_sale(request):
 
         total_cost = product.production_cost * quantity
         models.Transaction.objects.create(
-            category_id=category,
+            category_id=production_cost_category,
             date=sale_date,
             description=f"Production cost for {product.product_name} x {quantity}",
             amount=total_cost,
             reference_type="Production",
+            reference_id=sale_product.sale_product_id,
+        )
+        models.Transaction.objects.create(
+            category_id=product_sale_category,
+            date=sale_date,
+            description=f"Product sale for {product.product_name} x {quantity}",
+            amount=product.selling_price * quantity,
+            reference_type="SaleProduct",
             reference_id=sale_product.sale_product_id,
         )
 
@@ -1453,6 +1621,18 @@ def create_sale(request):
         saved_commodities.append(detail)
 
         update_inventory(commodity, Decimal(quantity), sale_commodity=detail)
+        models.Transaction.objects.create(
+            category_id=commodity_sale_category,
+            date=sale_date,
+            description=f"Commodity sale for {commodity} x {quantity} kg",
+            amount=int(
+                (
+                    Decimal(quantity) * Decimal(commodity.selling_price)
+                ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            ),
+            reference_type="SaleCommodity",
+            reference_id=detail.sale_commodity_id,
+        )
 
     product_summary = ", ".join(
         f"{detail.product_id} ({detail.product_quantity})" for detail in saved_products
@@ -1513,6 +1693,22 @@ def update_sale(request, id):
     sale.date = new_sale_date
     sale.save()
 
+    sale_product_ids = models.SaleProduct.objects.filter(
+        sale_id=sale
+    ).values_list("sale_product_id", flat=True)
+    models.Transaction.objects.filter(
+        reference_type__in=["Production", "SaleProduct"],
+        reference_id__in=sale_product_ids,
+    ).update(date=new_sale_date)
+
+    sale_commodity_ids = models.SaleCommodity.objects.filter(
+        sale_id=sale
+    ).values_list("sale_commodity_id", flat=True)
+    models.Transaction.objects.filter(
+        reference_type="SaleCommodity",
+        reference_id__in=sale_commodity_ids,
+    ).update(date=new_sale_date)
+
     models.ActivityLog.objects.create(
         user=request.user,
         action="Update Sale",
@@ -1556,6 +1752,11 @@ def delete_sale(request, id):
 
         restore_inventory(sale_product=sale_product)
 
+        models.Transaction.objects.filter(
+            reference_type="SaleProduct",
+            reference_id=sale_product.sale_product_id,
+        ).delete()
+
         if production_detail:
             models.Transaction.objects.filter(
                 reference_type="Production",
@@ -1570,6 +1771,10 @@ def delete_sale(request, id):
 
     for sale_commodity in sale_commodities:
         restore_inventory(sale_commodity=sale_commodity)
+        models.Transaction.objects.filter(
+            reference_type="SaleCommodity",
+            reference_id=sale_commodity.sale_commodity_id,
+        ).delete()
 
     market = sale.market_id
     sale_date = sale.date
@@ -1707,18 +1912,32 @@ def update_sale_product(request, id):
         production_detail.production_id.date = new_sale_date
         production_detail.production_id.save()
 
-    category, _ = models.TransactionCategory.objects.get_or_create(
+    production_cost_category, _ = models.TransactionCategory.objects.get_or_create(
         category_name="Production Cost",
         defaults={"type": "Expense"}
+    )
+    product_sale_category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Product Sale",
+        defaults={"type": "Income"}
     )
     models.Transaction.objects.update_or_create(
         reference_type="Production",
         reference_id=detail.sale_product_id,
         defaults={
-            "category_id": category,
+            "category_id": production_cost_category,
             "date": new_sale_date,
             "description": f"Production cost for {product.product_name} x {quantity}",
             "amount": product.production_cost * quantity,
+        }
+    )
+    models.Transaction.objects.update_or_create(
+        reference_type="SaleProduct",
+        reference_id=detail.sale_product_id,
+        defaults={
+            "category_id": product_sale_category,
+            "date": new_sale_date,
+            "description": f"Product sale for {product.product_name} x {quantity}",
+            "amount": product.selling_price * quantity,
         }
     )
 
@@ -1764,6 +1983,11 @@ def delete_sale_product(request, id):
     market = sale.market_id
     product = detail.product_id
     quantity = detail.product_quantity
+
+    models.Transaction.objects.filter(
+        reference_type="SaleProduct",
+        reference_id=detail.sale_product_id,
+    ).delete()
 
     if production_detail:
         restore_inventory(sale_product=detail)
@@ -1912,6 +2136,25 @@ def update_sale_commodity(request, id):
     detail.commodity_quantity = quantity
     detail.save()
 
+    commodity_sale_category, _ = models.TransactionCategory.objects.get_or_create(
+        category_name="Commodity Sale",
+        defaults={"type": "Income"}
+    )
+    models.Transaction.objects.update_or_create(
+        reference_type="SaleCommodity",
+        reference_id=detail.sale_commodity_id,
+        defaults={
+            "category_id": commodity_sale_category,
+            "date": new_sale_date,
+            "description": f"Commodity sale for {commodity} x {quantity} kg",
+            "amount": int(
+                (
+                    Decimal(quantity) * Decimal(commodity.selling_price)
+                ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+            ),
+        }
+    )
+
     models.ActivityLog.objects.create(
         user=request.user,
         action="Update Sale Commodity",
@@ -1946,6 +2189,10 @@ def delete_sale_commodity(request, id):
     quantity = detail.commodity_quantity
 
     restore_inventory(sale_commodity=detail)
+    models.Transaction.objects.filter(
+        reference_type="SaleCommodity",
+        reference_id=detail.sale_commodity_id,
+    ).delete()
 
     detail.delete()
     has_product_details = models.SaleProduct.objects.filter(sale_id=sale).exists()
@@ -2036,6 +2283,203 @@ def update_production(request, id):
 
     messages.success(request, "Production status successfully updated!")
     return redirect("read_production")
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def sales_report(request):
+    start = request.GET.get("start")
+    end = request.GET.get("end")
+    start_date = parse_date_filter(start)
+    end_date = parse_date_filter(end)
+
+    sales = models.Sale.objects.select_related("market_id").order_by("-date", "-sale_id")
+    if start_date:
+        sales = sales.filter(date__gte=start_date)
+    if end_date:
+        sales = sales.filter(date__lte=end_date)
+
+    detail_sales_list = []
+    grand_total = 0
+
+    for sale in sales:
+        commodity_details = list(
+            models.SaleCommodity.objects.select_related(
+                "commodity_id",
+                "commodity_id__grade_id",
+            ).filter(sale_id=sale)
+        )
+        product_details = list(
+            models.SaleProduct.objects.select_related("product_id").filter(
+                sale_id=sale
+            )
+        )
+        details = commodity_details + product_details
+        subtotals = []
+        sale_total = 0
+
+        for detail in commodity_details:
+            subtotal = detail.commodity_id.selling_price * detail.commodity_quantity
+            subtotals.append(subtotal)
+            sale_total += subtotal
+
+        for detail in product_details:
+            subtotal = detail.product_id.selling_price * detail.product_quantity
+            subtotals.append(subtotal)
+            sale_total += subtotal
+
+        if details:
+            detail_sales_list.append((sale, details, subtotals, sale_total))
+            grand_total += sale_total
+
+    return render(request, "report/sales_report.html", {
+        "start": start,
+        "end": end,
+        "detail_sales_list": detail_sales_list,
+        "grand_total": grand_total,
+    })
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def harvest_report(request):
+    mulai = parse_date_filter(request.GET.get("mulai"))
+    akhir = parse_date_filter(request.GET.get("akhir"))
+    harvest_type = request.GET.get("harvest_type") or "partner harvest"
+
+    detail_partner = []
+    detail_local = []
+    grand_total = 0
+    grand_total_local = 0
+
+    if harvest_type == "partner harvest":
+        harvests = models.PartnerHarvest.objects.select_related("partner_id").order_by(
+            "-harvest_date",
+            "-partner_harvest_id",
+        )
+        if mulai:
+            harvests = harvests.filter(harvest_date__gte=mulai)
+        if akhir:
+            harvests = harvests.filter(harvest_date__lte=akhir)
+
+        for harvest in harvests:
+            details = list(
+                models.PartnerHarvestDetail.objects.select_related(
+                    "commodity_id",
+                    "commodity_id__grade_id",
+                ).filter(partner_harvest_id=harvest)
+            )
+            subtotals = []
+            total = 0
+            for detail in details:
+                batch = models.InventoryBatch.objects.filter(
+                    source="Partner",
+                    source_detail_id=detail.partner_harvest_detail_id,
+                ).first()
+                detail.expiry_date = batch.expired_date if batch else None
+                subtotal = int(
+                    (
+                        Decimal(str(detail.quantity))
+                        * Decimal(detail.commodity_id.purchase_price)
+                    ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                )
+                subtotals.append(subtotal)
+                total += subtotal
+            if details:
+                detail_partner.append((harvest, details, subtotals, total))
+                grand_total += total
+    else:
+        harvests = models.LocalHarvest.objects.order_by(
+            "-harvest_date",
+            "-local_harvest_id",
+        )
+        if mulai:
+            harvests = harvests.filter(harvest_date__gte=mulai)
+        if akhir:
+            harvests = harvests.filter(harvest_date__lte=akhir)
+
+        for harvest in harvests:
+            details = list(
+                models.LocalHarvestDetail.objects.select_related(
+                    "commodity_id",
+                    "commodity_id__grade_id",
+                ).filter(local_harvest_id=harvest)
+            )
+            subtotals = []
+            total = 0
+            for detail in details:
+                batch = models.InventoryBatch.objects.filter(
+                    source="Local",
+                    source_detail_id=detail.local_harvest_detail_id,
+                ).first()
+                detail.expiry_date = batch.expired_date if batch else None
+                subtotal = int(
+                    (
+                        Decimal(str(detail.quantity))
+                        * Decimal(detail.commodity_id.purchase_price)
+                    ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                )
+                subtotals.append(subtotal)
+                total += subtotal
+            if details:
+                detail_local.append((harvest, details, subtotals, total))
+                grand_total_local += total
+
+    return render(request, "report/harvest_report.html", {
+        "mulai": mulai,
+        "akhir": akhir,
+        "harvest_type": harvest_type,
+        "detail_partner": detail_partner,
+        "detail_local": detail_local,
+        "grand_total": grand_total,
+        "grand_total_local": grand_total_local,
+    })
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def profit_and_loss_report(request):
+    bulan = request.GET.get("bulan")
+    context = build_profit_and_loss_context(bulan)
+    return render(request, "report/pnl_report.html", context)
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
+def profit_and_loss_pdf(request, bulan):
+    context = build_profit_and_loss_context(bulan)
+    return render(request, "report/pnlreportpdf.html", context)
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin", "inspection"])
+def total_commodities(request):
+    batches = models.InventoryBatch.objects.select_related(
+        "commodity_id",
+        "commodity_id__grade_id",
+    ).order_by("commodity_id__commodity_name", "expired_date")
+
+    total_list = []
+    commodity_list = []
+
+    for batch in batches:
+        commodity_label = str(batch.commodity_id)
+        if commodity_label not in commodity_list:
+            commodity_list.append(commodity_label)
+
+        total_list.append(SimpleNamespace(
+            commodity=commodity_label,
+            grade=batch.commodity_id.grade_id.grade_name,
+            harvest_date=batch.harvest_date,
+            batch=batch.inventory_batch_id,
+            expiry_date=batch.expired_date,
+            total_quantity=batch.remaining_quantity,
+        ))
+
+    return render(request, "total_commodities.html", {
+        "total_list": total_list,
+        "commodity_list": commodity_list,
+    })
 
 @login_required(login_url='login')
 @role_required(['owner'])
@@ -2207,6 +2651,176 @@ def delete_transactioncategory(request, id):
     category.delete()
     messages.success(request, "Transaction Category has been successfully deleted!")
     return redirect('read_transactioncategory')
+
+
+@login_required(login_url='login')
+@role_required(['owner', 'admin'])
+def read_transaction(request):
+    transaction_obj = models.Transaction.objects.select_related(
+        "category_id"
+    ).order_by("-date", "-transaction_id")
+
+    if not transaction_obj.exists():
+        messages.error(request, "No Transaction data found!")
+
+    return render(request, 'transaction/read_transaction.html', {
+        'transaction_obj': transaction_obj
+    })
+
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def create_transaction(request):
+    category_obj = models.TransactionCategory.objects.all().order_by("category_name")
+
+    if request.method == "GET":
+        return render(request, 'transaction/create_transaction.html', {
+            'category_obj': category_obj
+        })
+
+    category_id = request.POST.get("category")
+    date = request.POST.get("date")
+    description = request.POST.get("description")
+    amount = request.POST.get("amount")
+
+    if not category_id or not date or not description or not amount:
+        messages.error(request, "All Transaction fields are required!")
+        return redirect("create_transaction")
+
+    try:
+        category = models.TransactionCategory.objects.get(category_id=category_id)
+        amount = int(amount)
+    except (models.TransactionCategory.DoesNotExist, ValueError):
+        messages.error(request, "Selected category or amount is invalid!")
+        return redirect("create_transaction")
+
+    if amount <= 0:
+        messages.error(request, "Amount must be greater than zero!")
+        return redirect("create_transaction")
+
+    transaction = models.Transaction.objects.create(
+        category_id=category,
+        date=date,
+        description=description,
+        amount=amount,
+        reference_type="Manual",
+        reference_id=None,
+    )
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Add Transaction",
+        description=(
+            f"Added manual transaction ID {transaction.transaction_id}: "
+            f"{category.category_name}, {date}, Rp{amount}."
+        )
+    )
+
+    messages.success(request, "Transaction successfully added!")
+    return redirect("read_transaction")
+
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def update_transaction(request, id):
+    try:
+        transaction = models.Transaction.objects.select_related("category_id").get(
+            transaction_id=id
+        )
+    except models.Transaction.DoesNotExist:
+        messages.error(request, "Transaction not found!")
+        return redirect("read_transaction")
+
+    if transaction.reference_type != "Manual":
+        messages.error(request, "Automatic transactions cannot be updated!")
+        return redirect("read_transaction")
+
+    category_obj = models.TransactionCategory.objects.all().order_by("category_name")
+
+    if request.method == "GET":
+        return render(request, 'transaction/update_transaction.html', {
+            'transaction': transaction,
+            'category_obj': category_obj,
+            'transaction_date': transaction.date.strftime("%Y-%m-%d"),
+        })
+
+    category_id = request.POST.get("category")
+    date = request.POST.get("date")
+    description = request.POST.get("description")
+    amount = request.POST.get("amount")
+
+    if not category_id or not date or not description or not amount:
+        messages.error(request, "All Transaction fields are required!")
+        return redirect("update_transaction", id=id)
+
+    try:
+        category = models.TransactionCategory.objects.get(category_id=category_id)
+        amount = int(amount)
+    except (models.TransactionCategory.DoesNotExist, ValueError):
+        messages.error(request, "Selected category or amount is invalid!")
+        return redirect("update_transaction", id=id)
+
+    if amount <= 0:
+        messages.error(request, "Amount must be greater than zero!")
+        return redirect("update_transaction", id=id)
+
+    old_category = transaction.category_id
+    old_date = transaction.date
+    old_amount = transaction.amount
+
+    transaction.category_id = category
+    transaction.date = date
+    transaction.description = description
+    transaction.amount = amount
+    transaction.save()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Update Transaction",
+        description=(
+            f"Updated manual transaction ID {transaction.transaction_id}: "
+            f"{old_category}, {old_date}, Rp{old_amount} -> "
+            f"{category}, {date}, Rp{amount}."
+        )
+    )
+
+    messages.success(request, "Transaction successfully updated!")
+    return redirect("read_transaction")
+
+
+@login_required(login_url='login')
+@role_required(['owner'])
+def delete_transaction(request, id):
+    try:
+        transaction = models.Transaction.objects.select_related("category_id").get(
+            transaction_id=id
+        )
+    except models.Transaction.DoesNotExist:
+        messages.error(request, "Transaction not found!")
+        return redirect("read_transaction")
+
+    if transaction.reference_type != "Manual":
+        messages.error(request, "Automatic transactions cannot be deleted!")
+        return redirect("read_transaction")
+
+    category = transaction.category_id
+    date = transaction.date
+    amount = transaction.amount
+    transaction_id = transaction.transaction_id
+
+    transaction.delete()
+
+    models.ActivityLog.objects.create(
+        user=request.user,
+        action="Delete Transaction",
+        description=(
+            f"Deleted manual transaction ID {transaction_id}: "
+            f"{category}, {date}, Rp{amount}."
+        )
+    )
+
+    messages.success(request, "Transaction successfully deleted!")
+    return redirect("read_transaction")
 
 # @login_required(login_url="login")
 # def activity_logs(request):

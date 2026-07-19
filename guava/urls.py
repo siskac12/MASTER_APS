@@ -46,6 +46,11 @@ urlpatterns = [
     path('read_transactioncategory', views.read_transactioncategory,name='read_transactioncategory'),
     path('update_transactioncategory/<str:id>', views.update_transactioncategory,name='update_transactioncategory'),
     path('delete_transactioncategory/<str:id>', views.delete_transactioncategory,name='delete_transactioncategory'),
+    # # CRUD TRANSACTION
+    path('create_transaction', views.create_transaction,name='create_transaction'),
+    path('read_transaction', views.read_transaction,name='read_transaction'),
+    path('update_transaction/<str:id>', views.update_transaction,name='update_transaction'),
+    path('delete_transaction/<str:id>', views.delete_transaction,name='delete_transaction'),
     # # CRUD PARTNER HARVEST
     path('create_partner_harvest', views.create_partner_harvest,name='create_partner_harvest'),
     path('read_partner_harvest', views.read_partner_harvest,name='read_partner_harvest'),
@@ -73,12 +78,12 @@ urlpatterns = [
     path('update_production/<str:id>', views.update_production,name='update_production'),
     # path('delete_production/<str:id>', views.delete_production,name='delete_production'),
     # # REPORT
-    # path('sales_report', views.sales_report,name='sales_report'),
-    # path('harvest_report', views.harvest_report,name='harvest_report'),
-    # path('pnl_report', views.profit_and_loss_report,name='pnl_report'),
-    # path('profit_and_loss_pdf<str:bulan>', views.profit_and_loss_pdf,name='profit_and_loss_pdf'),
+    path('sales_report', views.sales_report,name='sales_report'),
+    path('harvest_report', views.harvest_report,name='harvest_report'),
+    path('pnl_report', views.profit_and_loss_report,name='pnl_report'),
+    path('profit_and_loss_pdf/<str:bulan>', views.profit_and_loss_pdf,name='profit_and_loss_pdf'),
     # # ADD
-    # path('total_commodities/', views.total_commodities, name='total_commodities'),
+    path('total_commodities/', views.total_commodities, name='total_commodities'),
     # path('rekap_panen/', views.monthly_harvest_report, name='rekap-panen'),
     # path('activity_logs/', views.activity_logs, name='activity_logs'),
     # path('logs/delete/<int:id>/', views.delete_log, name='delete_log')

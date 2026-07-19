@@ -279,6 +279,86 @@
         </div>
       </li>
       {% endif %}
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic10" aria-expanded="false" aria-controls="ui-basic10">
+          <span class="menu-icon">
+            <i class="mdi mdi-file-chart"></i>
+          </span>
+          <span class="menu-title">Report</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic10">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'sales_report' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Sales Report</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'harvest_report' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Harvest Report</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'pnl_report' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>P&L Report</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'total_commodities' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Commodity Log</span>
+              </a>
+            </li>
+          </ul>
+        </div>
+      </li>
+      {% endif %}
+      {% if is_owner or is_admin %}
+      <li class="nav-item menu-items">
+        <a class="nav-link" data-toggle="collapse" href="#ui-basic9" aria-expanded="false" aria-controls="ui-basic9">
+          <span class="menu-icon">
+            <i class="mdi mdi-cash-multiple"></i>
+          </span>
+          <span class="menu-title">Transaction</span>
+          <i class="menu-arrow"></i>
+        </a>
+        <div class="collapse" id="ui-basic9">
+          <ul class="nav flex-column sub-menu">
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'read_transaction' %}">
+                <span>
+                  <i class="mdi mdi-format-list-bulleted mr-2"></i>
+                </span>
+                <span>Data Transaction</span>
+              </a>
+            </li>
+            {% if is_owner %}
+            <li class="nav-item">
+              <a class="nav-link" href="{% url 'create_transaction' %}">
+                <span>
+                  <i class="mdi mdi-plus mr-2"></i>
+                </span>
+                <span>Add Transaction</span>
+              </a>
+            </li>
+            {% endif %}
+          </ul>
+        </div>
+      </li>
+      {% endif %}
       {% if is_owner or is_admin or is_inspection %}
       <li class="nav-item menu-items">
         <a class="nav-link" data-toggle="collapse" href="#ui-basic8" aria-expanded="false" aria-controls="ui-basic8">

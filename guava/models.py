@@ -201,6 +201,7 @@ class TransactionCategory(models.Model):
     
 
 REFERENCE_TYPE = [
+    ("Manual", "Manual"),
     ("SaleProduct", "Sale Product"),
     ("SaleCommodity", "Sale Commodity"),
     ("PartnerHarvest", "Partner Harvest"),
@@ -215,7 +216,7 @@ class Transaction(models.Model):
     description = models.CharField(max_length=200)
     amount = models.PositiveIntegerField()
     reference_type = models.CharField(max_length=30, choices=REFERENCE_TYPE)
-    reference_id = models.PositiveIntegerField()
+    reference_id = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
         return f"{self.reference_type} #{self.reference_id} - Rp{self.amount}"

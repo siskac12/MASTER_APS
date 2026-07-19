@@ -63,19 +63,19 @@
                                 </td>
                                 <td>
                                     {% for detail in item.1 %}
-                                        {% if detail.commodity_id.purchase_price == None %}
-                                        <h6>-</h6>
+                                        {% if detail.commodity_id %}
+                                        <h6>Rp{{detail.commodity_id.selling_price}}</h6>
                                         {% else %}
-                                        <h6>Rp{{detail.commodity_id.purchase_price}}</h6>
+                                        <h6>-</h6>
                                         {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>
                                     {% for detail in item.1 %}
-                                        {% if detail.commodity_quantity == None %}
-                                        <h6>-</h6>
-                                        {% else %}
+                                        {% if detail.commodity_quantity %}
                                         <h6>{{detail.commodity_quantity}}</h6>
+                                        {% else %}
+                                        <h6>-</h6>
                                         {% endif %}
                                     {% endfor %}
                                 </td>
@@ -90,16 +90,20 @@
                                 </td>
                                 <td>
                                     {% for detail in item.1 %}
-                                        {% if detail.product_id.product_price == None %}
-                                        <h6>-</h6>
+                                        {% if detail.product_id %}
+                                        <h6>Rp{{detail.product_id.selling_price}}</h6>
                                         {% else %}
-                                        <h6>Rp{{detail.product_id.product_price}}</h6>
+                                        <h6>-</h6>
                                         {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>
                                     {% for detail in item.1 %}
+                                        {% if detail.product_quantity %}
                                         <h6>{{detail.product_quantity}}</h6>
+                                        {% else %}
+                                        <h6>-</h6>
+                                        {% endif %}
                                     {% endfor %}
                                 </td>
                                 <td>

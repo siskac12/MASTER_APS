@@ -34,8 +34,8 @@
                             {% for item in inventory_qs %}
                             <tr>
                                 <td class="text-center">{{ forloop.counter }}</td>
-                                <td class="text-center">{{ item.harvest_date }}</td>
                                 <td class="text-center">{{ item.expired_date }}</td>
+                                <td class="text-center">{{ item.harvest_date }}</td>
                                 <td class="text-center">B{{ item.inventory_batch_id|stringformat:"03d" }}</td>
                                 <td>{{ item.commodity_id }}</td>
                                 <td class="text-right">{{ item.remaining_quantity }} kg</td>

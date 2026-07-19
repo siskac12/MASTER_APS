@@ -3,108 +3,89 @@
 {% block content %}
 <div class="row">
     <div class="col-lg-12 grid-margin stretch-card">
-        
         <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
                     <div class="form-group">
-                        <form  class="form-inline" method="get">
-                            <label  class="col-form-label" for="bulan">Bulan</label>
-                            <input class="form-control form-control-sm mb-2 mr-sm-2 ml-2" type="month" value="{{bulan}}" name="bulan" id="bulan">
+                        <form class="form-inline" method="get">
+                            <label class="col-form-label" for="bulan">Month</label>
+                            <input class="form-control form-control-sm mb-2 mr-sm-2 ml-2" type="month" value="{{ bulan }}" name="bulan" id="bulan">
                             <button class="btn btn-primary ml-2 mb-2" type="submit">Submit</button>
                         </form>
                     </div>
+
                     {% if bulan %}
-                    <h3 class="card-title">Laporan Laba Rugi Bulan {{month}}</h3>
+                    <h3 class="card-title">Profit and Loss Report - {{ month }}</h3>
 
-                    <table  class="table table-bordered table-dark" id="laporanlabarugi">
+                    <table class="table table-bordered table-dark" id="laporanlabarugi">
                         <tr>
-                            <th align="left" class="text-light">Pendapatan</th>
+                            <th align="left" class="text-light">Income</th>
                             <th></th>
                             <th></th>
                         </tr>
 
+                        {% for account in income_accounts %}
                         <tr>
-                            <td >Penjualan</td>
-                            <td >Rp{{pendapatan_awal}}</td>
+                            <td>{{ account.name }}</td>
+                            <td>Rp{{ account.amount }}</td>
                             <td></td>
                         </tr>
-
+                        {% empty %}
                         <tr>
-                            <td >Pendapatan lain</td>
-                            <td >Rp0</td>
+                            <td>No income account</td>
+                            <td>Rp0</td>
                             <td></td>
-                        </tr>
-
-                        <tr>
-                            <th class="text-light">Total Pendapatan</th>
-                            <td ></td>
-                            <td class="text-light">Rp{{pendapatan_awal}}</td>
-
-                        </tr>
-
-                        <tr>
-                            <th 
-                             align="left">Harga Pokok Produksi</th>
-                            <td ></td>
-                            <td >Rp{{hpproduksi}}</td>
-                        </tr>
-
-                        <tr>
-                            <th class="text-light"  align="left">Harga Pokok Penjualan</th>
-                            <td ></td>
-                            <td class="text-light">Rp{{hppenjualan}}</td>
-                        </tr>
-
-                        <tr >
-                            <td >Laba/Rugi</td>
-                            <td ></td>
-                            <td >Rp{{laba_kotor}}</td>
-                        </tr>
-                        
-                        <tr>
-                            <th class="text-light" align="left">Beban Usaha</th>
-                            <td ></td>
-                            <td ></td>
-                        </tr>
-                        {% for key,value in dictbbu.items %}
-                        <tr>
-                            <td >{{key}}</td>
-                            <td >Rp{{value}}</td>
-                            <td ></td>
                         </tr>
                         {% endfor %}
 
                         <tr>
-                            <th class="text-light" align="left">Total</th>
+                            <th class="text-light">Total Income</th>
+                            <td></td>
+                            <td class="text-light">Rp{{ total_income }}</td>
+                        </tr>
+
+                        <tr>
+                            <th align="left" class="text-light">Expense</th>
                             <th></th>
-                            <td class="text-light" >Rp{{bbufix}}</td>
+                            <th></th>
                         </tr>
-                        
+
+                        {% for account in expense_accounts %}
                         <tr>
-                            <td >Laba Sebelum Pajak</td>
-                            <td ></td>
-                            <td >Rp{{laba_kotor}}</td>
+                            <td>{{ account.name }}</td>
+                            <td>Rp{{ account.amount }}</td>
+                            <td></td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td>No expense account</td>
+                            <td>Rp0</td>
+                            <td></td>
+                        </tr>
+                        {% endfor %}
+
+                        <tr>
+                            <th class="text-light">Total Expense</th>
+                            <td></td>
+                            <td class="text-light">Rp{{ total_expense }}</td>
                         </tr>
 
                         <tr>
-                            <td >Pajak Penghasilan</td>
-                            <td >Rp{{pajak_penghasilan}}</td>
-                            <td ></td>
+                            <th class="text-light" align="left">Net Income</th>
+                            <td></td>
+                            <td class="text-light">Rp{{ net_income }}</td>
                         </tr>
-
-                        <tr>
-                            <th class="text-light"  align="left">Laba Bersih</th>
-                            <td ></td>
-                            <td class="text-light">Rp{{pendapatan_bersih}}</td>
-                        </tr>
-                        <a href="{% url 'laporanlabarugi_pdf' bulan=bulan %}">
-                            <button class="btn btn-info">
-                            Cetak Laporan
-                            </button>
-                        </a>
                     </table>
+
+                    <a href="{% url 'profit_and_loss_pdf' bulan=bulan %}">
+                        <button class="btn btn-info mt-3">
+                            Print Report
+                        </button>
+                    </a>
                     {% endif %}
-
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock content %}
-
