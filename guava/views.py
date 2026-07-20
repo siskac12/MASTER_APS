@@ -176,58 +176,85 @@ def perform_logout(request):
 @login_required(login_url="login")
 @role_required(["owner", 'admin'])
 def base(request):
-    local_harvest_details = models.LocalHarvestDetail.objects.all()
-    partner_harvest_details = models.PartnerHarvestDetail.objects.all()
-    commodities = models.Commodity.objects.all()
-    commodity_dict = {i: 0 for i in commodities}
+    inventory = (
+        models.InventoryBatch.objects
+        .values(
+            "commodity_id__commodity_name",
+            "commodity_id__grade_id__grade_name"
+        )
+        .annotate(stock=Sum("remaining_quantity"))
+    )
 
-    for local in local_harvest_details:
-        commodity = local.commodity_id
-        commodity_dict[commodity] = commodity_dict.get(commodity, 0) + local.quantity
+    stock_labels = [
+        f"{i['commodity_id__commodity_name']} ({i['commodity_id__grade_id__grade_name']})"
+        for i in inventory
+    ]
 
-    for partner in partner_harvest_details:
-        commodity = partner.commodity_id
-        commodity_dict[commodity] = commodity_dict.get(commodity, 0) + partner.quantity
+    stock_values = [
+        float(i["stock"])
+        for i in inventory
+    ]
 
-    list_commodities = list(commodity_dict.keys())
-    list_quantities = list(commodity_dict.values())
+    chart_type = request.POST.get("chart", "Commodity")
 
-    if request.method == 'GET':
-        return render(request, 'base/dashboard.html', {
-            'list_commodities': list_commodities,
-            'list_quantities': list_quantities,
-        })
+    sales_labels = []
+    sales_values = []
+
+
+    if chart_type == "Commodity":
+
+        sales = (
+            models.SaleCommodity.objects
+            .values(
+                "commodity_id__commodity_name",
+                "grade_id__grade_name"
+            )
+            .annotate(total=Sum("commodity_quantity"))
+        )
+
+        sales_labels = [
+            f"{i['commodity_id__commodity_name']} ({i['grade_id__grade_name']})"
+            for i in sales
+        ]
+
+        sales_values = [
+            i["total"]
+            for i in sales
+        ]
+
 
     else:
-        inp = request.POST['chart']
-        list_markets = []
-        list_quantities = []
 
-        # if inp == 'Product':
-        #     for i in sale_details:
-        #         if i.sale_id.market_id is not None and i.commodity_quantity:
-        #             list_markets.append(i.sale_id.market_id.market_name)
-        #             list_quantities.append(i.commodity_quantity)
+        sales = (
+            models.SaleProduct.objects
+            .values("product_id__product_name")
+            .annotate(total=Sum("product_quantity"))
+        )
 
-        # elif inp == 'Commodity':
-        #     for i in sale_details:
-        #         if i.sale_id.market_id is not None and i.product_quantity:
-        #             list_markets.append(i.sale_id.market_id.market_name)
-        #             list_quantities.append(i.product_quantity)
+        sales_labels = [
+            i["product_id__product_name"]
+            for i in sales
+        ]
 
-        market_dict = {}
-        for a, b in zip(list_markets, list_quantities):
-            market_dict[a] = market_dict.get(a, 0) + b
+        sales_values = [
+            i["total"]
+            for i in sales
+        ]
 
-        final_markets = list(market_dict.keys())
-        final_quantities = list(market_dict.values())
 
-        return render(request, 'base/dashboard.html', {
-            'list_commodities': list_commodities,
-            'list_quantities': list_quantities,
-            'list_markets': final_markets,
-            'list_market_quantities': final_quantities,
-        })
+    return render(
+        request,
+        "base/dashboard.html",
+        {
+            "chart_type": chart_type,
+
+            "sales_labels": sales_labels,
+            "sales_values": sales_values,
+
+            "stock_labels": stock_labels,
+            "stock_values": stock_values,
+        },
+    )
 
 @login_required(login_url="login")
 @role_required(["owner", 'admin'])
