@@ -29,8 +29,8 @@ class Partner(models.Model):
 
 class Grade(models.Model):
     grade_id = models.AutoField(primary_key=True)
-    grade_name = models.CharField(max_length=100) #Grade A, Grade B, Grade C, Processed. Ada grade discard apakah perlu dimasukkan?
-    grade_description = models.TextField(blank=True, null=True) #Bebas keterangan dari admin
+    grade_name = models.CharField(max_length=100)
+    grade_description = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return str(self.grade_name)
@@ -38,11 +38,11 @@ class Grade(models.Model):
 
 class Commodity(models.Model):
     commodity_id = models.AutoField(primary_key=True)
-    commodity_name = models.CharField(max_length=100) #Crystal Guava
+    commodity_name = models.CharField(max_length=100)
     grade_id = models.ForeignKey(Grade, on_delete=models.CASCADE)
-    shelf_life = models.PositiveIntegerField() #dalam hari
-    purchase_price = models.PositiveBigIntegerField() #per kg
-    selling_price = models.PositiveBigIntegerField() #per kg
+    shelf_life = models.PositiveIntegerField()
+    purchase_price = models.PositiveBigIntegerField()
+    selling_price = models.PositiveBigIntegerField()
 
     def __str__(self):
         return f"{self.commodity_name} - {self.grade_id.grade_name}"
@@ -50,11 +50,11 @@ class Commodity(models.Model):
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
-    product_name = models.CharField(max_length=100) #Guava Pastry, Rujak Telang
-    selling_price = models.PositiveIntegerField() #Maksudnya harga jual produk
+    product_name = models.CharField(max_length=100)
+    selling_price = models.PositiveIntegerField()
     production_cost = models.PositiveIntegerField(default=0)
-    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE) #Nama commodity yang dibutuhkan (satu aja)
-    commodity_quantity = models.DecimalField(max_digits=5, decimal_places=2) #Jumlah comomodity yang diperlukan untuk buat satu unit produk (kg)
+    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE)
+    commodity_quantity = models.DecimalField(max_digits=5, decimal_places=2)
 
     def __str__(self):
         return str(self.product_name)
@@ -62,8 +62,8 @@ class Product(models.Model):
 
 class PartnerHarvest(models.Model):
     partner_harvest_id = models.AutoField(primary_key=True)
-    partner_id = models.ForeignKey(Partner, on_delete=models.CASCADE) #Nama partner yang panen dengan status active
-    harvest_date = models.DateField()  
+    partner_id = models.ForeignKey(Partner, on_delete=models.CASCADE)
+    harvest_date = models.DateField()
 
     def __str__(self):
         return str(self.partner_id.partner_name)
@@ -71,9 +71,9 @@ class PartnerHarvest(models.Model):
 
 class PartnerHarvestDetail(models.Model):
     partner_harvest_detail_id = models.AutoField(primary_key=True)
-    partner_harvest_id = models.ForeignKey(PartnerHarvest, on_delete=models.CASCADE) 
-    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE) #hasil dari harvest nya, misalnya 1 harvest_id ada 3 komoditas, yaudah berarti nanti dari 1 harvest_id ada 3 record detail harvest
-    quantity = models.DecimalField(max_digits=10, decimal_places=2) #hasilnya berapa dari panennya (kg)
+    partner_harvest_id = models.ForeignKey(PartnerHarvest, on_delete=models.CASCADE)
+    commodity_id = models.ForeignKey(Commodity, on_delete=models.CASCADE)
+    quantity = models.DecimalField(max_digits=10, decimal_places=2)
 
     def __str__(self):
         return "{} - {}".format(self.partner_harvest_id)
@@ -99,7 +99,7 @@ class LocalHarvestDetail(models.Model):
 
 class Market(models.Model):
     market_id = models.AutoField(primary_key=True)
-    market_name = models.CharField(max_length=100) #kita jual kesiapa (contoh: superindo)
+    market_name = models.CharField(max_length=100)
     market_address = models.TextField()
     phone_number = models.PositiveBigIntegerField()
 
@@ -167,10 +167,7 @@ class InventoryBatch(models.Model):
     expired_date = models.DateField()
     initial_quantity = models.DecimalField(max_digits=10, decimal_places=2)
     remaining_quantity = models.DecimalField(max_digits=10, decimal_places=2)
-    source = models.CharField(
-        max_length=10,
-        choices=SOURCE_CHOICES
-    )
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES)
     source_detail_id = models.PositiveIntegerField(null=True, blank=True)
 
     def __str__(self):
