@@ -71,9 +71,9 @@ urlpatterns = [
     path('harvest_report', views.harvest_report,name='harvest_report'),
     path('pnl_report', views.profit_and_loss_report,name='pnl_report'),
     path('profit_and_loss_pdf/<str:bulan>', views.profit_and_loss_pdf,name='profit_and_loss_pdf'),
-    # # ADD
+    # # COMMODITY LOG
     path('total_commodities/', views.total_commodities, name='total_commodities'),
-    # # Activity Log
+    # # ACTIVITY LOG
     path('activity_logs/', views.activity_logs, name='activity_logs'),
     path('logs/delete/<int:id>/', views.delete_log, name='delete_log')
 ]

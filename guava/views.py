@@ -9,22 +9,8 @@ from django.contrib import messages
 from django.contrib.auth import login , logout, authenticate
 from django.contrib.auth.decorators import login_required
 from .decorators import role_required
-from django.forms import DateInput
-from django.db.models import F,Q,Sum,Value
-import math
-from django.template.loader import render_to_string
-import tempfile
-from django.urls import reverse
-from io import BytesIO
-from django.utils.timezone import now
+from django.db.models import Sum
 from django.shortcuts import render
-from django.core.mail import EmailMessage
-from django.template.loader import render_to_string
-from django.conf import settings
-from django.http import JsonResponse
-from django.shortcuts import get_object_or_404
-from django.views.decorators.csrf import csrf_exempt
-import json
 
 
 def parse_date_filter(value):
@@ -34,7 +20,6 @@ def parse_date_filter(value):
         return datetime.strptime(value, "%Y-%m-%d").date()
     except ValueError:
         return None
-
 
 def get_month_range(month_value):
     if not month_value:
@@ -48,7 +33,6 @@ def get_month_range(month_value):
     end = selected.replace(day=last_day)
     month_name = selected.strftime("%B %Y")
     return start, end, month_name
-
 
 def get_sales_revenue(start_date=None, end_date=None):
     sales = models.Sale.objects.all()
@@ -71,7 +55,6 @@ def get_sales_revenue(start_date=None, end_date=None):
         )
     )
     return product_total + commodity_total
-
 
 def build_profit_and_loss_context(month_value):
     start_date, end_date, month_name = get_month_range(month_value)
