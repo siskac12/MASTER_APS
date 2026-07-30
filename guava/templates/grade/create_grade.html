@@ -6,34 +6,33 @@
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
             <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'read_grade' %}">Data Grade</a></li>
-          <li class="breadcrumb-item " ><a  href="{% url 'create_grade' %}">Create Grade</a></li>
+            <li class="breadcrumb-item " ><a  href="{% url 'create_grade' %}">Create Grade</a></li>
         </ol>
-      </nav>
+    </nav>
 </div>
+
 <div class="row">   
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
                 <form class="form-sample" method="post">
                     {% csrf_token %}
-                    <h1 class="card-title">Grade</h1>                    
+                    <h1 class="card-title">Grade</h1>  
+                
                     <div class="form-group row">
-            
                         <label for="grade_name" class="col-sm-3 col-form-label">Grade Name</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="text" name="grade_name" id="grade_name"  placeholder="Grade Name" required>
                         </div>
-                    
                     </div>
+
                     <div class="form-group row">
-            
                         <label for="grade_description" class="col-sm-3 col-form-label">Grade Description</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="text" name="grade_description" id="grade_description"  placeholder="Grade Description" >
                         </div>
-                    
                     </div>
-
+                    
                     <button type="submit" class="btn btn-success btn-icon-text">
                         <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit </button>
                 </form>

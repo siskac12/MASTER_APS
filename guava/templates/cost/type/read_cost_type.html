@@ -5,13 +5,14 @@
     <h1 class="page-title">Data Cost Type</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item "><a href="{% url 'read_cost_type' %}">Data Cost Type</a></li>
-          {% if is_owner %}
-          <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_cost_type' %}">Create Cost Type</a></li>
-          {% endif %}
+        <li class="breadcrumb-item "><a href="{% url 'read_cost_type' %}">Data Cost Type</a></li>
+        {% if is_owner %}
+        <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_cost_type' %}">Create Cost Type</a></li>
+        {% endif %}
         </ol>
-      </nav>
+    </nav>
 </div>
+
 <div class="row">
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
@@ -35,7 +36,6 @@
                                 {% if is_owner %}
                                 <td>
                                     <a href="{% url 'update_cost_type' item.cost_type_id %}"><button class="btn btn-inverse-warning"><i class="mdi mdi-reload btn-icon-prepend align-middle"></i>Update</button></a>
-                
                                     <a href="{% url 'delete_cost_type' item.cost_type_id %}"><Button class="btn btn-inverse-danger"><i class="mdi mdi-close btn-icon-prepend align-middle"></i>Delete</Button></a>
                                 </td>
                                 {% endif %}
@@ -47,6 +47,5 @@
             </div>
         </div>
     </div>
-    
 </div>
 {% endblock %}

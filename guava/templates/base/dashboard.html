@@ -24,101 +24,80 @@
   <!-- End layout styles -->
   <link rel="shortcut icon" href="{% static 'assets/images/favicon.png' %}">
   <link href="{% static 'assets/vendors/datatables/dataTables.bootstrap4.min.css' %}" rel="stylesheet">
-</head>
-<style>
-  .custom-chart {
-      width: 100% !important; 
+
+  <style>
+    .custom-chart {
+      width: 100% !important;
       height: 400px !important;
-  }
-</style>
+    }
+  </style>
+</head>
+
 <body>
-    <div class="container-scroller">
-      {% include 'base/sidebar.html' %}
-      <div class="container-fluid page-body-wrapper">
-        {% include 'base/navbar.html' %}
-        <div class="main-panel">
-          <div class="content-wrapper">
-            {% include 'base/messages.html' %}
-            <div class="page-header">
-                <h1 class="page-title">Dashboard</h1>
+  <div class="container-scroller">
+    {% include 'base/sidebar.html' %}
+
+    <div class="container-fluid page-body-wrapper">
+      {% include 'base/navbar.html' %}
+
+      <div class="main-panel">
+        <div class="content-wrapper">
+          {% include 'base/messages.html' %}
+
+          <div class="page-header">
+            <h1 class="page-title">Dashboard</h1>
+          </div>
+
+          <form method="POST">
+            {% csrf_token %}
+
+            <div class="row mb-4">
+              <div class="col-md-3">
+                <select class="form-control" name="chart">
+                  <option value="Commodity" {% if chart_type == "Commodity" %}selected{% endif %}>
+                    Commodity Sales
+                  </option>
+
+                  <option value="Product" {% if chart_type == "Product" %}selected{% endif %}>
+                    Product Sales
+                  </option>
+                </select>
+              </div>
+
+              <div class="col-md-2">
+                <button class="btn btn-success">Show</button>
+              </div>
             </div>
-            <form method="POST">
-                {% csrf_token %}
+          </form>
 
-                <div class="row mb-4">
+          <div class="row">
+            <div class="col-md-6 mb-4">
+              <div class="card">
+                <div class="card-header">Sales Graph</div>
 
-                    <div class="col-md-3">
-                        <select class="form-control" name="chart">
-                            <option value="Commodity"
-                                {% if chart_type == "Commodity" %}selected{% endif %}>
-                                Commodity Sales
-                            </option>
-
-                            <option value="Product"
-                                {% if chart_type == "Product" %}selected{% endif %}>
-                                Product Sales
-                            </option>
-                        </select>
-                    </div>
-
-                    <div class="col-md-2">
-                        <button class="btn btn-success">
-                            Show
-                        </button>
-                    </div>
-
+                <div class="card-body">
+                  <canvas id="salesChart" style="max-height: 350px;"></canvas>
                 </div>
-            </form>
-<div class="row">
-
-    <div class="col-md-6 mb-4">
-
-        <div class="card">
-
-            <div class="card-header">
-                Sales Graph
+              </div>
             </div>
 
-            <div class="card-body">
+            <div class="col-md-6 mb-4">
+              <div class="card">
+                <div class="card-header">Stock Proportion</div>
 
-                <canvas id="salesChart"
-                        style="max-height:350px;">
-                </canvas>
-
+                <div class="card-body">
+                  <canvas id="stockChart" style="max-height: 350px;"></canvas>
+                </div>
+              </div>
             </div>
-
+          </div>
         </div>
-
+      </div>
     </div>
-
-
-
-    <div class="col-md-6 mb-4">
-
-        <div class="card">
-
-            <div class="card-header">
-                Stock Proportion
-            </div>
-
-            <div class="card-body">
-
-                <canvas id="stockChart"
-                        style="max-height:350px;">
-                </canvas>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
+  </div>
 </body>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <script>
-
+<script>
   new Chart(document.getElementById("salesChart"), {
       type: "bar",
       data: {
@@ -165,31 +144,24 @@
       }
   });
 
-
-
-  new Chart(document.getElementById("stockChart"),{
-
-      type:"pie",
-
-      data:{
-          labels: {{ stock_labels|safe }},
-          datasets:[{
-              label:"Current Stock",
-              data: {{ stock_values|safe }}
-          }]
-      },
-
-      options:{
-          responsive:true
-      }
-
+  new Chart(document.getElementById("stockChart"), {
+    type: "pie",
+    data: {
+      labels: {{ stock_labels|safe }},
+      datasets: [{
+        label: "Current Stock",
+        data: {{ stock_values|safe }}
+      }]
+    },
+    options: {
+      responsive: true
+    }
   });
+</script>
 
-  </script>    
-    <!-- jQuery pertama kali -->
+<!-- jQuery pertama kali -->
     <script src="{% static 'assets/vendors/jquery/jquery.min.js' %}"></script>
     <script src="{% static 'assets/js/vendor.bundle.base.js' %}"></script>
-
     <!-- DataTables -->
     <script src="{% static 'assets/vendors/datatables/jquery.dataTables.min.js' %}"></script>
     <script src="{% static 'assets/vendors/datatables/dataTables.bootstrap4.min.js' %}"></script>

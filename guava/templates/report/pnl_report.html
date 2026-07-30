@@ -13,17 +13,14 @@
                             <button class="btn btn-primary ml-2 mb-2" type="submit">Submit</button>
                         </form>
                     </div>
-
                     {% if bulan %}
                     <h3 class="card-title">Profit and Loss Report - {{ month }}</h3>
-
                     <table class="table table-bordered table-dark" id="laporanlabarugi">
                         <tr>
                             <th align="left" class="text-light">Income</th>
                             <th></th>
                             <th></th>
                         </tr>
-
                         {% for account in income_accounts %}
                         <tr>
                             <td>{{ account.name }}</td>
@@ -37,19 +34,16 @@
                             <td></td>
                         </tr>
                         {% endfor %}
-
                         <tr>
                             <th class="text-light">Total Income</th>
                             <td></td>
                             <td class="text-light">Rp{{ total_income }}</td>
                         </tr>
-
                         <tr>
                             <th align="left" class="text-light">Expense</th>
                             <th></th>
                             <th></th>
                         </tr>
-
                         {% for account in expense_accounts %}
                         <tr>
                             <td>{{ account.name }}</td>
@@ -63,20 +57,17 @@
                             <td></td>
                         </tr>
                         {% endfor %}
-
                         <tr>
                             <th class="text-light">Total Expense</th>
                             <td></td>
                             <td class="text-light">Rp{{ total_expense }}</td>
                         </tr>
-
                         <tr>
                             <th class="text-light" align="left">Net Income</th>
                             <td></td>
                             <td class="text-light">Rp{{ net_income }}</td>
                         </tr>
                     </table>
-
                     <a href="{% url 'profit_and_loss_pdf' bulan=bulan %}">
                         <button class="btn btn-info mt-3">
                             Print Report

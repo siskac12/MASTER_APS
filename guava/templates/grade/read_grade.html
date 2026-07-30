@@ -5,13 +5,14 @@
     <h1 class="page-title">Data Grade</h1>
     <nav aria-label="breadcrumb">
         <ol class="breadcrumb">
-          <li class="breadcrumb-item "><a href="{% url 'read_grade' %}">Data Grade</a></li>
-          {% if is_owner %}
-          <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_grade' %}">Create Grade</a></li>
-          {% endif %}
+            <li class="breadcrumb-item "><a href="{% url 'read_grade' %}">Data Grade</a></li>
+            {% if is_owner %}
+            <li class="breadcrumb-item active " aria-current="page" ><a class="text-muted" href="{% url 'create_grade' %}">Create Grade</a></li>
+            {% endif %}
         </ol>
-      </nav>
+    </nav>
 </div>
+
 <div class="row">
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
@@ -48,6 +49,5 @@
             </div>
         </div>
     </div>
-    
 </div>
 {% endblock %}

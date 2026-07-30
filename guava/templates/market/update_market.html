@@ -10,32 +10,35 @@
         </ol>
     </nav>
 </div>
+
 <div class="row">
     <div class="col-lg-12 grid-margin stretch-card">
         <div class="card">
             <div class="card-body">
                 <form class="form-sample" method="post">
-                    {% csrf_token %}
 
+                    {% csrf_token %}
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Market Name</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="text" name="market_name" value="{{market.market_name}}" required>
                         </div>
                     </div>
+
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Market Address</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="text" name="market_address" value="{{market.market_address}}" required>
                         </div>
                     </div>
+
                     <div class="form-group row">
                         <label class="col-sm-3 col-form-label">Phone Number</label>
                         <div class="col-sm-9">
                             <input class="form-control" type="text" name="phone_number" value="{{market.phone_number}}" required>
                         </div>
                     </div>
-
+                    
                     <button type="submit" class="btn btn-success btn-icon-text">
                         <i class="mdi mdi-file-check btn-icon-prepend"></i> Submit </button>
                 </form>

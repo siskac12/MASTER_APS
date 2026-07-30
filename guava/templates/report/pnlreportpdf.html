@@ -23,14 +23,12 @@
 <body>
     <h1>Profit and Loss Report</h1>
     <h3 style="text-align: center;">Month {{ month }}</h3>
-
     <table>
         <tr>
             <th align="left">Income</th>
             <th></th>
             <th></th>
         </tr>
-
         {% for account in income_accounts %}
         <tr>
             <td align="left">{{ account.name }}</td>
@@ -44,19 +42,16 @@
             <td></td>
         </tr>
         {% endfor %}
-
         <tr>
             <th align="left">Total Income</th>
             <td></td>
             <td>Rp. {{ total_income }}</td>
         </tr>
-
         <tr>
             <th align="left">Expense</th>
             <th></th>
             <th></th>
         </tr>
-
         {% for account in expense_accounts %}
         <tr>
             <td align="left">{{ account.name }}</td>
@@ -70,13 +65,11 @@
             <td></td>
         </tr>
         {% endfor %}
-
         <tr>
             <th align="left">Total Expense</th>
             <td></td>
             <td>Rp. {{ total_expense }}</td>
         </tr>
-
         <tr>
             <th align="left">Net Income</th>
             <td></td>

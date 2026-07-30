@@ -6,7 +6,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from types import SimpleNamespace
 from django.http import HttpResponse
 from django.contrib import messages
-from django.contrib.auth import login , logout, authenticate
+from django.contrib.auth import login, logout, authenticate
 from django.contrib.auth.decorators import login_required
 from .decorators import role_required
 from django.db.models import Sum
@@ -21,6 +21,7 @@ def parse_date_filter(value):
     except ValueError:
         return None
 
+
 def get_month_range(month_value):
     if not month_value:
         return None, None, None
@@ -33,6 +34,7 @@ def get_month_range(month_value):
     end = selected.replace(day=last_day)
     month_name = selected.strftime("%B %Y")
     return start, end, month_name
+
 
 def get_sales_revenue(start_date=None, end_date=None):
     sales = models.Sale.objects.all()
@@ -56,6 +58,7 @@ def get_sales_revenue(start_date=None, end_date=None):
     )
     return product_total + commodity_total
 
+
 def build_profit_and_loss_context(month_value):
     start_date, end_date, month_name = get_month_range(month_value)
     if not start_date or not end_date:
@@ -72,7 +75,9 @@ def build_profit_and_loss_context(month_value):
     category_totals = {}
     for transaction in transactions:
         category_id = transaction.category_id_id
-        category_totals[category_id] = category_totals.get(category_id, 0) + transaction.amount
+        category_totals[category_id] = (
+            category_totals.get(category_id, 0) + transaction.amount
+        )
 
     income_accounts = []
     expense_accounts = []
@@ -109,12 +114,12 @@ def login_view(request):
         if request.user.groups.exists():
             group = request.user.groups.all()[0].name
 
-        if group == 'inspection':
-            return redirect('read_partner')
-        elif group in ['admin', 'owner']:
-            return redirect('base')
+        if group == "inspection":
+            return redirect("read_partner")
+        elif group in ["admin", "owner"]:
+            return redirect("base")
         else:
-            return redirect('create_partner')
+            return redirect("create_partner")
     else:
         return render(request, "base/login.html")
 
@@ -123,22 +128,27 @@ def perform_login(request):
     if request.method != "POST":
         return HttpResponse("Method not Allowed")
     else:
-        username_login = request.POST['username']
-        password_login = request.POST['password']
-        user_obj = authenticate(request, username=username_login, password=password_login)
+        username_login = request.POST["username"]
+        password_login = request.POST["password"]
+        user_obj = authenticate(
+            request, username=username_login, password=password_login
+        )
 
         if user_obj is not None:
             login(request, user_obj)
             messages.success(request, "Login success")
 
-            if user_obj.groups.filter(name='admin').exists() or user_obj.groups.filter(name='owner').exists():
+            if (
+                user_obj.groups.filter(name="admin").exists()
+                or user_obj.groups.filter(name="owner").exists()
+            ):
                 return redirect("base")
-            elif user_obj.groups.filter(name='inspection').exists():
+            elif user_obj.groups.filter(name="inspection").exists():
                 return redirect("read_partner")
-            elif user_obj.groups.filter(name='production').exists():
-                return redirect('read_production')
+            elif user_obj.groups.filter(name="production").exists():
+                return redirect("read_production")
             else:
-                return redirect('login')
+                return redirect("login")
         else:
             messages.error(request, "Invalid username or password!")
             return redirect("login")
@@ -148,7 +158,7 @@ def perform_login(request):
 def logout_view(request):
     logout(request)
     messages.info(request, "Successfully logged out")
-    return redirect('login')
+    return redirect("login")
 
 
 @login_required(login_url="login")
@@ -156,94 +166,67 @@ def perform_logout(request):
     logout(request)
     return redirect("login")
 
+
 @login_required(login_url="login")
-@role_required(["owner", 'admin'])
+@role_required(["owner", "admin"])
 def base(request):
-    inventory = (
-        models.InventoryBatch.objects
-        .values(
-            "commodity_id__commodity_name",
-            "commodity_id__grade_id__grade_name"
-        )
-        .annotate(stock=Sum("remaining_quantity"))
-    )
+    inventory = models.InventoryBatch.objects.values(
+        "commodity_id__commodity_name", "commodity_id__grade_id__grade_name"
+    ).annotate(stock=Sum("remaining_quantity"))
 
     stock_labels = [
         f"{i['commodity_id__commodity_name']} ({i['commodity_id__grade_id__grade_name']})"
         for i in inventory
     ]
 
-    stock_values = [
-        float(i["stock"])
-        for i in inventory
-    ]
+    stock_values = [float(i["stock"]) for i in inventory]
 
     chart_type = request.POST.get("chart", "Commodity")
 
     sales_labels = []
     sales_values = []
 
-
     if chart_type == "Commodity":
 
-        sales = (
-            models.SaleCommodity.objects
-            .values(
-                "commodity_id__commodity_name",
-                "grade_id__grade_name"
-            )
-            .annotate(total=Sum("commodity_quantity"))
-        )
+        sales = models.SaleCommodity.objects.values(
+            "commodity_id__commodity_name", "grade_id__grade_name"
+        ).annotate(total=Sum("commodity_quantity"))
 
         sales_labels = [
             f"{i['commodity_id__commodity_name']} ({i['grade_id__grade_name']})"
             for i in sales
         ]
 
-        sales_values = [
-            i["total"]
-            for i in sales
-        ]
-
+        sales_values = [i["total"] for i in sales]
 
     else:
 
-        sales = (
-            models.SaleProduct.objects
-            .values("product_id__product_name")
-            .annotate(total=Sum("product_quantity"))
+        sales = models.SaleProduct.objects.values("product_id__product_name").annotate(
+            total=Sum("product_quantity")
         )
 
-        sales_labels = [
-            i["product_id__product_name"]
-            for i in sales
-        ]
+        sales_labels = [i["product_id__product_name"] for i in sales]
 
-        sales_values = [
-            i["total"]
-            for i in sales
-        ]
-
+        sales_values = [i["total"] for i in sales]
 
     return render(
         request,
         "base/dashboard.html",
         {
             "chart_type": chart_type,
-
             "sales_labels": sales_labels,
             "sales_values": sales_values,
-
             "stock_labels": stock_labels,
             "stock_values": stock_values,
         },
     )
 
+
 @login_required(login_url="login")
-@role_required(["owner", 'admin'])
+@role_required(["owner", "admin"])
 def create_partner(request):
     if request.method == "GET":
-        return render(request, 'partner/create_partner.html')
+        return render(request, "partner/create_partner.html")
     else:
         partner_name = request.POST["partner_name"].lower()
         partner_obj = models.Partner.objects.filter(partner_name=partner_name)
@@ -272,21 +255,21 @@ def create_partner(request):
         models.ActivityLog.objects.create(
             user=request.user,
             action="Add Partner",
-            description=f"Added new partner: {data.partner_name}, status: {data.partner_status}, contract {data.contract_duration} months."
+            description=f"Added new partner: {data.partner_name}, status: {data.partner_status}, contract {data.contract_duration} months.",
         )
 
         messages.success(request, "Partner successfully added!")
         return redirect("read_partner")
 
+
 @login_required(login_url="login")
-@role_required(["owner", 'admin','inspection'])
+@role_required(["owner", "admin", "inspection"])
 def read_partner(request):
-    all_partners = models.Partner.objects.all().order_by('start_date')
+    all_partners = models.Partner.objects.all().order_by("start_date")
     if not all_partners.exists():
         messages.error(request, "No Partner Data Found!")
-    return render(request, 'partner/read_partner.html', {
-        'all_partners': all_partners
-    })
+    return render(request, "partner/read_partner.html", {"all_partners": all_partners})
+
 
 @login_required(login_url="login")
 @role_required(["owner", "admin", "inspection"])
@@ -298,14 +281,22 @@ def update_partner(request, id):
         return redirect("read_partner")
 
     if request.method == "GET":
-        return render(request, "partner/update_partner.html", {
-            "partner_obj": partner_obj,
-            "start_date": partner_obj.start_date.strftime("%Y-%m-%d"),
-        })
+        return render(
+            request,
+            "partner/update_partner.html",
+            {
+                "partner_obj": partner_obj,
+                "start_date": partner_obj.start_date.strftime("%Y-%m-%d"),
+            },
+        )
 
     partner_name = request.POST["partner_name"].lower()
 
-    if models.Partner.objects.filter(partner_name=partner_name).exclude(partner_id=id).exists():
+    if (
+        models.Partner.objects.filter(partner_name=partner_name)
+        .exclude(partner_id=id)
+        .exists()
+    ):
         messages.error(request, "Partner name already exists!")
         return redirect("update_partner", id=id)
 
@@ -323,7 +314,6 @@ def update_partner(request, id):
     partner_obj.inspection_notes = request.POST.get("inspection_notes")
     partner_obj.partner_status = request.POST["partner_status"]
 
-    
     if request.FILES.get("dokumen"):
         partner_obj.dokumen = request.FILES["dokumen"]
 
@@ -335,11 +325,12 @@ def update_partner(request, id):
         description=(
             f"Updated partner: {partner_obj.partner_name}. "
             f"Status: {old_status} → {partner_obj.partner_status}"
-        )
+        ),
     )
 
     messages.success(request, "Partner successfully updated!")
     return redirect("read_partner")
+
 
 @login_required(login_url="login")
 @role_required(["owner"])
@@ -352,18 +343,19 @@ def delete_partner(request, id):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Delete Partner",
-        description=f"Deleted partner: {name}, Address: {address}, Phone: {phone}."
+        description=f"Deleted partner: {name}, Address: {address}, Phone: {phone}.",
     )
 
     partner_obj.delete()
     messages.success(request, "Partner successfully deleted!")
-    return redirect('read_partner')
+    return redirect("read_partner")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def create_grade(request):
     if request.method == "GET":
-        return render(request, 'grade/create_grade.html')
+        return render(request, "grade/create_grade.html")
     else:
         grade_name = request.POST["grade_name"]
         grade_obj = models.Grade.objects.filter(grade_name=grade_name)
@@ -384,37 +376,51 @@ def create_grade(request):
             models.ActivityLog(
                 user=request.user,
                 action="Add Grade",
-                description=f"Added new grade: {data.grade_name} - {data.grade_description}."
+                description=f"Added new grade: {data.grade_name} - {data.grade_description}.",
             ).save()
 
         return redirect("read_grade")
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def read_grade(request):
     gradeobj = models.Grade.objects.all()
-    return render(request, 'grade/read_grade.html', {'gradeobj': gradeobj})
+    return render(request, "grade/read_grade.html", {"gradeobj": gradeobj})
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def update_grade(request, id):
     try:
         grade_obj = models.Grade.objects.get(grade_id=id)
     except models.Grade.DoesNotExist:
         messages.error(request, "Grade not found!")
-        return redirect('read_grade')
+        return redirect("read_grade")
 
     if request.method == "GET":
-        return render(request, 'grade/update_grade.html', {
-            'gradeobj': grade_obj,
-        })
+        return render(
+            request,
+            "grade/update_grade.html",
+            {
+                "gradeobj": grade_obj,
+            },
+        )
     else:
         grade_name = request.POST["grade_name"]
-        if models.Grade.objects.filter(grade_name=grade_name).exclude(grade_id=id).exists():
+        if (
+            models.Grade.objects.filter(grade_name=grade_name)
+            .exclude(grade_id=id)
+            .exists()
+        ):
             messages.error(request, "Grade name already exists!")
-            return render(request, 'grade/update_grade.html', {
-                'gradeobj': grade_obj,
-            })
+            return render(
+                request,
+                "grade/update_grade.html",
+                {
+                    "gradeobj": grade_obj,
+                },
+            )
 
         old_name = grade_obj.grade_name
         old_desc = grade_obj.grade_description
@@ -426,14 +432,15 @@ def update_grade(request, id):
         models.ActivityLog(
             user=request.user,
             action="Update Grade",
-            description=f"Updated grade from '{old_name} - {old_desc}' \n to '{grade_obj.grade_name} - {grade_obj.grade_description}'."
+            description=f"Updated grade from '{old_name} - {old_desc}' \n to '{grade_obj.grade_name} - {grade_obj.grade_description}'.",
         ).save()
 
         messages.success(request, "Grade successfully updated!")
-        return redirect('read_grade')
+        return redirect("read_grade")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def delete_grade(request, id):
     grade_obj = models.Grade.objects.get(grade_id=id)
     grade_name = grade_obj.grade_name
@@ -444,43 +451,43 @@ def delete_grade(request, id):
     models.ActivityLog(
         user=request.user,
         action="Delete Grade",
-        description=f"Deleted grade: {grade_name} - {grade_description}."
+        description=f"Deleted grade: {grade_name} - {grade_description}.",
     ).save()
 
     messages.success(request, "Grade successfully deleted!")
-    return redirect('read_grade')
+    return redirect("read_grade")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def create_commodity(request):
     grade_obj = models.Grade.objects.all()
-    
-    if request.method == 'GET':
-        return render(request, 'commodity/create_commodity.html', {
-            'grade_obj': grade_obj
-        })
-    
+
+    if request.method == "GET":
+        return render(
+            request, "commodity/create_commodity.html", {"grade_obj": grade_obj}
+        )
+
     else:
-        grade_name = request.POST['grade_name']
-        commodity_name = request.POST['commodity_name']
-        shelf_life = request.POST['shelf_life']
-        purchase_price = request.POST['purchase_price']
-        selling_price = request.POST['selling_price']
+        grade_name = request.POST["grade_name"]
+        commodity_name = request.POST["commodity_name"]
+        shelf_life = request.POST["shelf_life"]
+        purchase_price = request.POST["purchase_price"]
+        selling_price = request.POST["selling_price"]
 
         commodity_obj = models.Commodity.objects.filter(
-            commodity_name=commodity_name,
-            grade_id__grade_name=grade_name
+            commodity_name=commodity_name, grade_id__grade_name=grade_name
         )
 
         if commodity_obj.exists():
             messages.error(request, "Commodity already exists!")
-        
+
         else:
             grade_instance = models.Grade.objects.get(grade_name=grade_name)
             data = models.Commodity(
                 grade_id=grade_instance,
                 commodity_name=commodity_name,
-                shelf_life = shelf_life,
+                shelf_life=shelf_life,
                 purchase_price=purchase_price,
                 selling_price=selling_price,
             )
@@ -494,56 +501,61 @@ def create_commodity(request):
                     f"Grade {data.grade_id.grade_name}, "
                     f"Purchase {data.purchase_price}, "
                     f"Selling {data.selling_price}."
-                )
+                ),
             ).save()
 
             messages.success(request, "Commodity has been successfully added!")
 
-        return redirect('read_commodity')
+        return redirect("read_commodity")
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def read_commodity(request):
     commodity_obj = models.Commodity.objects.all()
     if not commodity_obj.exists():
         messages.error(request, "No commodity data found!")
 
-    return render(request, 'commodity/read_commodity.html', {
-        'commodity_obj': commodity_obj
-    })
+    return render(
+        request, "commodity/read_commodity.html", {"commodity_obj": commodity_obj}
+    )
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def update_commodity(request, id):
     grade_obj = models.Grade.objects.all()
     commodity = models.Commodity.objects.get(commodity_id=id)
     grade_name = commodity.grade_id.grade_name
 
-    if request.method == 'GET':
-        return render(request, 'commodity/update_commodity.html', {
-            'commodity': commodity,
-            'grade_name': grade_name,
-            'grade_obj': grade_obj,
-            'id': id,
-        })
+    if request.method == "GET":
+        return render(
+            request,
+            "commodity/update_commodity.html",
+            {
+                "commodity": commodity,
+                "grade_name": grade_name,
+                "grade_obj": grade_obj,
+                "id": id,
+            },
+        )
 
     else:
-        new_grade_name = request.POST['grade_name']
-        new_commodity_name = request.POST['commodity_name']
-        new_shelf_life = request.POST['shelf_life']
-        new_purchase_price = request.POST['purchase_price']
-        new_selling_price = request.POST['selling_price']
+        new_grade_name = request.POST["grade_name"]
+        new_commodity_name = request.POST["commodity_name"]
+        new_shelf_life = request.POST["shelf_life"]
+        new_purchase_price = request.POST["purchase_price"]
+        new_selling_price = request.POST["selling_price"]
 
         commodity_obj = models.Commodity.objects.filter(
-            commodity_name=new_commodity_name,
-            grade_id__grade_name=new_grade_name
+            commodity_name=new_commodity_name, grade_id__grade_name=new_grade_name
         )
         if commodity_obj.exists() and (
-            commodity.commodity_name != new_commodity_name 
+            commodity.commodity_name != new_commodity_name
             or commodity.grade_id.grade_name != new_grade_name
         ):
             messages.error(request, "Commodity already exists!")
-            return redirect('update_commodity', id)
+            return redirect("update_commodity", id)
 
         old_name = commodity.commodity_name
         old_grade = commodity.grade_id.grade_name
@@ -565,14 +577,15 @@ def update_commodity(request, id):
                 f"Updated commodity ID {commodity.commodity_id}:\n "
                 f"From: {old_name} (Grade: {old_grade}, Purchase: {old_purchase_price}, Selling: {old_selling_price})\n "
                 f"To: {new_commodity_name} (Grade: {new_grade_name}, Purchase: {new_purchase_price}, Selling: {new_selling_price})\n"
-            )
+            ),
         ).save()
 
         messages.success(request, "Commodity has been successfully updated!")
-        return redirect('read_commodity')
+        return redirect("read_commodity")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def delete_commodity(request, id):
     commodity = models.Commodity.objects.get(commodity_id=id)
     name = commodity.commodity_name
@@ -581,25 +594,24 @@ def delete_commodity(request, id):
     models.ActivityLog(
         user=request.user,
         action="Delete Commodity",
-        description=(
-            f"Deleted commodity: {name} (Grade: {grade})."
-        )
+        description=(f"Deleted commodity: {name} (Grade: {grade})."),
     ).save()
-    
+
     commodity.delete()
     messages.error(request, "Commodity has been deleted!")
-    return redirect('read_commodity')
+    return redirect("read_commodity")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def create_product(request):
 
-    commodity_obj = models.Commodity.objects.filter(
-        grade_id__grade_name="Processed"
-    )
+    commodity_obj = models.Commodity.objects.filter(grade_id__grade_name="Processed")
 
     if request.method == "GET":
-        return render(request, "product/create_product.html", {"commodity_obj": commodity_obj})
+        return render(
+            request, "product/create_product.html", {"commodity_obj": commodity_obj}
+        )
 
     product_name = request.POST["product_name"]
     selling_price = request.POST["selling_price"]
@@ -625,27 +637,25 @@ def create_product(request):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Add Product",
-        description=f"Added new product: {data.product_name}, price {data.selling_price}."
+        description=f"Added new product: {data.product_name}, price {data.selling_price}.",
     )
 
     messages.success(request, "Product has been successfully added!")
     return redirect("read_product")
 
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def read_product(request):
     product_obj = models.Product.objects.all()
     if not product_obj.exists():
         messages.error(request, "No product data found!")
 
-    return render(request, 'product/read_product.html', {
-        'product_obj': product_obj
-    })
+    return render(request, "product/read_product.html", {"product_obj": product_obj})
 
 
-@login_required(login_url='login')
-@role_required(['owner'])
+@login_required(login_url="login")
+@role_required(["owner"])
 def update_product(request, id):
     try:
         product = models.Product.objects.get(product_id=id)
@@ -656,7 +666,11 @@ def update_product(request, id):
     commodity_obj = models.Commodity.objects.filter(grade_id__grade_name="Processed")
 
     if request.method == "GET":
-        return render(request, "product/update_product.html", {"product": product, "commodity_obj": commodity_obj})
+        return render(
+            request,
+            "product/update_product.html",
+            {"product": product, "commodity_obj": commodity_obj},
+        )
 
     product_name = request.POST["product_name"]
     selling_price = request.POST["selling_price"]
@@ -664,12 +678,25 @@ def update_product(request, id):
     commodity_id = request.POST["commodity_id"]
     production_cost = request.POST["production_cost"]
 
-    if models.Product.objects.filter(product_name=product_name).exclude(product_id=id).exists():
+    if (
+        models.Product.objects.filter(product_name=product_name)
+        .exclude(product_id=id)
+        .exists()
+    ):
         messages.error(request, "Product name already exists!")
-        return render(request, "product/update_product.html", {"product": product, "commodity_obj": commodity_obj,})
+        return render(
+            request,
+            "product/update_product.html",
+            {
+                "product": product,
+                "commodity_obj": commodity_obj,
+            },
+        )
 
     try:
-        commodity = models.Commodity.objects.get(commodity_id=commodity_id, grade_id__grade_name="Processed")
+        commodity = models.Commodity.objects.get(
+            commodity_id=commodity_id, grade_id__grade_name="Processed"
+        )
     except models.Commodity.DoesNotExist:
         messages.error(request, "Selected commodity is invalid!")
         return redirect("update_product", id=id)
@@ -694,15 +721,15 @@ def update_product(request, id):
             f"Commodity: {old_commodity} → {commodity}. "
             f"Selling Price: {old_price} → {selling_price}. "
             f"Commodity Quantity: {old_qty} kg → {commodity_quantity} kg."
-        )
+        ),
     )
 
     messages.success(request, "Product has been successfully updated!")
     return redirect("read_product")
 
 
-@login_required(login_url='login')
-@role_required(['owner'])
+@login_required(login_url="login")
+@role_required(["owner"])
 def delete_product(request, id):
     product = models.Product.objects.get(product_id=id)
     name = product.product_name
@@ -713,27 +740,26 @@ def delete_product(request, id):
     models.ActivityLog(
         user=request.user,
         action="Delete Product",
-        description=(
-            f"Deleted product: {name}, price {price}."
-        )
+        description=(f"Deleted product: {name}, price {price}."),
     ).save()
 
     messages.error(request, "Product has been deleted!")
-    return redirect('read_product')
+    return redirect("read_product")
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def create_market(request):
-    if request.method == 'GET':
-        return render(request, 'market/create_market.html')
+    if request.method == "GET":
+        return render(request, "market/create_market.html")
     else:
-        market_name = request.POST['market_name']
-        market_address = request.POST['market_address']
-        phone_number = request.POST['phone_number']
+        market_name = request.POST["market_name"]
+        market_address = request.POST["market_address"]
+        phone_number = request.POST["phone_number"]
 
         market_obj = models.Market.objects.filter(market_name=market_name)
         if market_obj.exists():
-            messages.error(request, 'Market name already exists!')
+            messages.error(request, "Market name already exists!")
         else:
             data = models.Market(
                 market_name=market_name,
@@ -745,41 +771,40 @@ def create_market(request):
             models.ActivityLog(
                 user=request.user,
                 action="Add Market",
-                description=f"Added new market: {data.market_name}, located at {data.market_address}."
+                description=f"Added new market: {data.market_name}, located at {data.market_address}.",
             ).save()
-            messages.success(request, 'Market successfully added!')
+            messages.success(request, "Market successfully added!")
 
-        return redirect('read_market')
+        return redirect("read_market")
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def read_market(request):
     market_obj = models.Market.objects.all()
     if not market_obj.exists():
         messages.error(request, "No market data found!")
-    
-    return render(request, 'market/read_market.html', {
-        'market_obj': market_obj
-    })
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+    return render(request, "market/read_market.html", {"market_obj": market_obj})
+
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def update_market(request, id):
     market = models.Market.objects.get(market_id=id)
-    if request.method == 'GET':
-        return render(request, 'market/update_market.html', {
-            'market': market,
-            'id': id
-        })
+    if request.method == "GET":
+        return render(
+            request, "market/update_market.html", {"market": market, "id": id}
+        )
     else:
-        market_name = request.POST['market_name']
-        market_address = request.POST['market_address']
-        phone_number = request.POST['phone_number']
+        market_name = request.POST["market_name"]
+        market_address = request.POST["market_address"]
+        phone_number = request.POST["phone_number"]
 
         existing = models.Market.objects.filter(market_name=market_name)
         if existing.exists() and market.market_name != market_name:
-            messages.error(request, 'Market name already exists!')
-            return redirect('update_market', id)
+            messages.error(request, "Market name already exists!")
+            return redirect("update_market", id)
 
         old_name = market.market_name
         old_address = market.market_address
@@ -792,14 +817,15 @@ def update_market(request, id):
         models.ActivityLog(
             user=request.user,
             action="Update Market",
-            description=f"Updated market from '{old_name} - {old_address}' \n to '{market_name} - {market_address}'."
+            description=f"Updated market from '{old_name} - {old_address}' \n to '{market_name} - {market_address}'.",
         ).save()
 
-        messages.success(request, 'Market successfully updated!')
-        return redirect('read_market')   
+        messages.success(request, "Market successfully updated!")
+        return redirect("read_market")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def delete_market(request, id):
     market_obj = models.Market.objects.get(market_id=id)
     name = market_obj.market_name
@@ -810,11 +836,11 @@ def delete_market(request, id):
     models.ActivityLog(
         user=request.user,
         action="Delete Market",
-        description=f"Deleted market {name} located at {address}."
+        description=f"Deleted market {name} located at {address}.",
     ).save()
 
     messages.success(request, "Market successfully deleted!")
-    return redirect('read_market')    
+    return redirect("read_market")
 
 
 @login_required(login_url="login")
@@ -828,22 +854,30 @@ def read_partner_harvest(request):
     if not harvest_qs.exists():
         messages.error(request, "No Partner Harvest data found!")
 
-    return render(request, "harvest/partner/read_partner_harvest.html", {
-        "harvest_qs": harvest_qs,
-    })
+    return render(
+        request,
+        "harvest/partner/read_partner_harvest.html",
+        {
+            "harvest_qs": harvest_qs,
+        },
+    )
 
 
 @login_required(login_url="login")
-@role_required(["owner", 'admin'])
+@role_required(["owner", "admin"])
 def create_partner_harvest(request):
     all_partners = models.Partner.objects.filter(partner_status="Active")
     all_commodities = models.Commodity.objects.all()
 
     if request.method == "GET":
-        return render(request, "harvest/partner/create_partner_harvest.html", {
-            "all_partners": all_partners,
-            "all_commodities": all_commodities,
-        })
+        return render(
+            request,
+            "harvest/partner/create_partner_harvest.html",
+            {
+                "all_partners": all_partners,
+                "all_commodities": all_commodities,
+            },
+        )
     else:
         partner_id = request.POST.get("partner_name") or request.POST.get("partner")
         harvest_date = request.POST.get("harvest_date")
@@ -855,7 +889,9 @@ def create_partner_harvest(request):
             return redirect("create_partner_harvest")
 
         try:
-            partner_obj = models.Partner.objects.get(partner_id=partner_id, partner_status="Active")
+            partner_obj = models.Partner.objects.get(
+                partner_id=partner_id, partner_status="Active"
+            )
         except models.Partner.DoesNotExist:
             messages.error(request, "Selected partner is not active or does not exist!")
             return redirect("create_partner_harvest")
@@ -888,7 +924,8 @@ def create_partner_harvest(request):
             models.InventoryBatch.objects.create(
                 commodity_id=commodity_obj,
                 harvest_date=harvest.harvest_date,
-                expired_date=harvest.harvest_date + timedelta(days=commodity_obj.shelf_life),
+                expired_date=harvest.harvest_date
+                + timedelta(days=commodity_obj.shelf_life),
                 initial_quantity=quantity,
                 remaining_quantity=quantity,
                 source="Partner",
@@ -936,7 +973,7 @@ def create_partner_harvest(request):
             description=(
                 f"Added partner harvest for {partner_obj.partner_name} on {harvest_date}: "
                 f"{detail_summary}."
-            )
+            ),
         )
 
         messages.success(request, "Partner Harvest successfully added!")
@@ -960,12 +997,16 @@ def update_partner_harvest(request, id):
     harvest_date = detail_obj.partner_harvest_id.harvest_date.strftime("%Y-%m-%d")
 
     if request.method == "GET":
-        return render(request, "harvest/partner/update_partner_harvest.html", {
-            "detail_obj": detail_obj,
-            "partners": partners,
-            "commodities": commodities,
-            "harvest_date": harvest_date,
-        })
+        return render(
+            request,
+            "harvest/partner/update_partner_harvest.html",
+            {
+                "detail_obj": detail_obj,
+                "partners": partners,
+                "commodities": commodities,
+                "harvest_date": harvest_date,
+            },
+        )
     else:
         partner_id = request.POST.get("partner_name") or request.POST.get("partner")
         new_harvest_date = request.POST.get("harvest_date")
@@ -991,7 +1032,7 @@ def update_partner_harvest(request, id):
             if batch.remaining_quantity != batch.initial_quantity:
                 messages.error(
                     request,
-                    "Cannot update! Stock from this batch has already been used "
+                    "Cannot update! Stock from this batch has already been used ",
                 )
                 return redirect("read_partner_harvest")
         except models.InventoryBatch.DoesNotExist:
@@ -1015,7 +1056,9 @@ def update_partner_harvest(request, id):
         if batch:
             batch.commodity_id = commodity_obj
             batch.harvest_date = harvest.harvest_date
-            batch.expired_date = harvest.harvest_date + timedelta(days=commodity_obj.shelf_life)
+            batch.expired_date = harvest.harvest_date + timedelta(
+                days=commodity_obj.shelf_life
+            )
             batch.initial_quantity = quantity
             batch.remaining_quantity = quantity
             batch.save()
@@ -1055,7 +1098,7 @@ def update_partner_harvest(request, id):
                 f"Updated partner harvest detail ID {detail_obj.partner_harvest_detail_id}: "
                 f"{old_partner}, {old_date}, {old_commodity}, {old_quantity} kg -> "
                 f"{partner_obj.partner_name}, {new_harvest_date}, {commodity_obj}, {quantity} kg."
-            )
+            ),
         )
 
         messages.success(request, "Partner Harvest successfully updated!")
@@ -1081,8 +1124,7 @@ def delete_partner_harvest(request, id):
         )
         if batch.remaining_quantity != batch.initial_quantity:
             messages.error(
-                request,
-                "Cannot delete! Stock from this batch has already been used "
+                request, "Cannot delete! Stock from this batch has already been used "
             )
             return redirect("read_partner_harvest")
     except models.InventoryBatch.DoesNotExist:
@@ -1100,7 +1142,7 @@ def delete_partner_harvest(request, id):
         description=(
             f"Deleted partner harvest detail: {partner_name}, {harvest_date}, "
             f"{commodity}, {quantity} kg."
-        )
+        ),
     )
 
     models.Transaction.objects.filter(
@@ -1109,7 +1151,9 @@ def delete_partner_harvest(request, id):
     ).delete()
 
     detail_obj.delete()
-    if not models.PartnerHarvestDetail.objects.filter(partner_harvest_id=harvest).exists():
+    if not models.PartnerHarvestDetail.objects.filter(
+        partner_harvest_id=harvest
+    ).exists():
         harvest.delete()
 
     if batch:
@@ -1130,9 +1174,13 @@ def read_local_harvest(request):
     if not harvests.exists():
         messages.error(request, "No Local Harvest data found!")
 
-    return render(request, "harvest/local/read_local_harvest.html", {
-        "harvests": harvests,
-    })
+    return render(
+        request,
+        "harvest/local/read_local_harvest.html",
+        {
+            "harvests": harvests,
+        },
+    )
 
 
 @login_required(login_url="login")
@@ -1141,10 +1189,14 @@ def create_local_harvest(request):
     all_commodities = models.Commodity.objects.all()
 
     if request.method == "GET":
-        return render(request, "harvest/local/create_local_harvest.html", {
-            "all_commodities": all_commodities,
-            "allcommodity": all_commodities,
-        })
+        return render(
+            request,
+            "harvest/local/create_local_harvest.html",
+            {
+                "all_commodities": all_commodities,
+                "allcommodity": all_commodities,
+            },
+        )
     else:
         harvest_date = request.POST.get("harvest_date")
         commodities = request.POST.getlist("commodity")
@@ -1181,7 +1233,8 @@ def create_local_harvest(request):
             models.InventoryBatch.objects.create(
                 commodity_id=commodity_obj,
                 harvest_date=harvest.harvest_date,
-                expired_date=harvest.harvest_date + timedelta(days=commodity_obj.shelf_life),
+                expired_date=harvest.harvest_date
+                + timedelta(days=commodity_obj.shelf_life),
                 initial_quantity=quantity,
                 remaining_quantity=quantity,
                 source="Local",
@@ -1200,7 +1253,7 @@ def create_local_harvest(request):
         models.ActivityLog.objects.create(
             user=request.user,
             action="Add Local Harvest",
-            description=f"Added local harvest on {harvest_date}: {detail_summary}."
+            description=f"Added local harvest on {harvest_date}: {detail_summary}.",
         )
 
         messages.success(request, "Local Harvest successfully added!")
@@ -1223,11 +1276,15 @@ def update_local_harvest(request, id):
     harvest_date = detail_obj.local_harvest_id.harvest_date.strftime("%Y-%m-%d")
 
     if request.method == "GET":
-        return render(request, "harvest/local/update_local_harvest.html", {
-            "detail_obj": detail_obj,
-            "all_commodities": all_commodities,
-            "harvest_date": harvest_date,
-        })
+        return render(
+            request,
+            "harvest/local/update_local_harvest.html",
+            {
+                "detail_obj": detail_obj,
+                "all_commodities": all_commodities,
+                "harvest_date": harvest_date,
+            },
+        )
     else:
         new_harvest_date = request.POST.get("harvest_date")
         commodity_id = request.POST.get("commodity")
@@ -1251,7 +1308,7 @@ def update_local_harvest(request, id):
             if batch.remaining_quantity != batch.initial_quantity:
                 messages.error(
                     request,
-                    "Cannot update! Stock from this batch has already been used "
+                    "Cannot update! Stock from this batch has already been used ",
                 )
                 return redirect("read_local_harvest")
         except models.InventoryBatch.DoesNotExist:
@@ -1273,7 +1330,9 @@ def update_local_harvest(request, id):
         if batch:
             batch.commodity_id = commodity_obj
             batch.harvest_date = harvest.harvest_date
-            batch.expired_date = harvest.harvest_date + timedelta(days=commodity_obj.shelf_life)
+            batch.expired_date = harvest.harvest_date + timedelta(
+                days=commodity_obj.shelf_life
+            )
             batch.initial_quantity = quantity
             batch.remaining_quantity = quantity
             batch.save()
@@ -1285,7 +1344,7 @@ def update_local_harvest(request, id):
                 f"Updated local harvest detail ID {detail_obj.local_harvest_detail_id}: "
                 f"{old_date}, {old_commodity}, {old_quantity} kg -> "
                 f"{new_harvest_date}, {commodity_obj}, {quantity} kg."
-            )
+            ),
         )
 
         messages.success(request, "Local Harvest successfully updated!")
@@ -1311,8 +1370,7 @@ def delete_local_harvest(request, id):
         )
         if batch.remaining_quantity != batch.initial_quantity:
             messages.error(
-                request,
-                "Cannot delete! Stock from this batch has already been used "
+                request, "Cannot delete! Stock from this batch has already been used "
             )
             return redirect("read_local_harvest")
     except models.InventoryBatch.DoesNotExist:
@@ -1326,7 +1384,7 @@ def delete_local_harvest(request, id):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Delete Local Harvest",
-        description=f"Deleted local harvest detail: {harvest_date}, {commodity}, {quantity} kg."
+        description=f"Deleted local harvest detail: {harvest_date}, {commodity}, {quantity} kg.",
     )
 
     detail_obj.delete()
@@ -1339,6 +1397,7 @@ def delete_local_harvest(request, id):
     messages.success(request, "Local Harvest successfully deleted!")
     return redirect("read_local_harvest")
 
+
 @login_required(login_url="login")
 @role_required(["owner", "admin", "production"])
 def read_inventory(request):
@@ -1349,10 +1408,15 @@ def read_inventory(request):
     if not inventory_qs.exists():
         messages.error(request, "No Inventory data found!")
 
-    return render(request, "inventory/read_inventory.html", {
-        "inventory_qs": inventory_qs,
-        "today": datetime.now().date(),
-    })
+    return render(
+        request,
+        "inventory/read_inventory.html",
+        {
+            "inventory_qs": inventory_qs,
+            "today": datetime.now().date(),
+        },
+    )
+
 
 @login_required(login_url="login")
 @role_required(["owner", "admin"])
@@ -1370,10 +1434,15 @@ def read_sale(request):
     if not product_sales.exists() and not commodity_sales.exists():
         messages.error(request, "No Sales data found!")
 
-    return render(request, "sales/read_sales.html", {
-        "product_sales": product_sales,
-        "commodity_sales": commodity_sales,
-    })
+    return render(
+        request,
+        "sales/read_sales.html",
+        {
+            "product_sales": product_sales,
+            "commodity_sales": commodity_sales,
+        },
+    )
+
 
 def update_inventory(commodity_obj, quantity, sale_commodity=None, sale_product=None):
     today = datetime.now().date()
@@ -1407,7 +1476,9 @@ def restore_inventory(sale_commodity=None, sale_product=None):
     if sale_product is not None:
         filters["sale_product_id"] = sale_product
 
-    usages = models.InventoryUsage.objects.filter(**filters).select_related("inventory_batch_id")
+    usages = models.InventoryUsage.objects.filter(**filters).select_related(
+        "inventory_batch_id"
+    )
     for usage in usages:
         batch = usage.inventory_batch_id
         batch.remaining_quantity += usage.quantity
@@ -1425,9 +1496,11 @@ def reduce_inventory(sale_commodity=None, sale_product=None, amount=Decimal("0")
     if sale_product is not None:
         filters["sale_product_id"] = sale_product
 
-    usages = models.InventoryUsage.objects.filter(**filters).select_related(
-        "inventory_batch_id"
-    ).order_by("-inventory_usage_id")
+    usages = (
+        models.InventoryUsage.objects.filter(**filters)
+        .select_related("inventory_batch_id")
+        .order_by("-inventory_usage_id")
+    )
 
     remaining = amount
     for usage in usages:
@@ -1447,6 +1520,7 @@ def reduce_inventory(sale_commodity=None, sale_product=None, amount=Decimal("0")
 
         remaining -= cut
 
+
 @login_required(login_url="login")
 @role_required(["owner", "admin"])
 def create_sale(request):
@@ -1455,11 +1529,15 @@ def create_sale(request):
     commodity_obj = models.Commodity.objects.select_related("grade_id").all()
 
     if request.method == "GET":
-        return render(request, "sales/create_sales.html", {
-            "market_obj": market_obj,
-            "product_obj": product_obj,
-            "commodity_obj": commodity_obj,
-        })
+        return render(
+            request,
+            "sales/create_sales.html",
+            {
+                "market_obj": market_obj,
+                "product_obj": product_obj,
+                "commodity_obj": commodity_obj,
+            },
+        )
 
     market_id = request.POST.get("market")
     sale_date = request.POST.get("date")
@@ -1526,11 +1604,13 @@ def create_sale(request):
 
         if stock < qty:
             same_products = [
-                (product, quantity) for product, quantity in product_details
+                (product, quantity)
+                for product, quantity in product_details
                 if product.commodity_id == commodity
             ]
             same_commodities = [
-                (item, quantity) for item, quantity in commodity_details
+                (item, quantity)
+                for item, quantity in commodity_details
                 if item == commodity
             ]
 
@@ -1565,16 +1645,13 @@ def create_sale(request):
     )
 
     production_cost_category, _ = models.TransactionCategory.objects.get_or_create(
-        category_name="Production Cost",
-        defaults={"type": "Expense"}
+        category_name="Production Cost", defaults={"type": "Expense"}
     )
     product_sale_category, _ = models.TransactionCategory.objects.get_or_create(
-        category_name="Product Sale",
-        defaults={"type": "Income"}
+        category_name="Product Sale", defaults={"type": "Income"}
     )
     commodity_sale_category, _ = models.TransactionCategory.objects.get_or_create(
-        category_name="Commodity Sale",
-        defaults={"type": "Income"}
+        category_name="Commodity Sale", defaults={"type": "Income"}
     )
 
     production = None
@@ -1636,9 +1713,9 @@ def create_sale(request):
             date=sale_date,
             description=f"Commodity sale for {commodity} x {quantity} kg",
             amount=int(
-                (
-                    Decimal(quantity) * Decimal(commodity.selling_price)
-                ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                (Decimal(quantity) * Decimal(commodity.selling_price)).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
             ),
             reference_type="SaleCommodity",
             reference_id=detail.sale_commodity_id,
@@ -1658,11 +1735,12 @@ def create_sale(request):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Add Sale",
-        description=f"Added sale for {market.market_name} on {sale_date}: {detail_summary}."
+        description=f"Added sale for {market.market_name} on {sale_date}: {detail_summary}.",
     )
 
     messages.success(request, "Sale successfully added!")
     return redirect("read_sale")
+
 
 @login_required(login_url="login")
 @role_required(["owner", "admin"])
@@ -1677,11 +1755,15 @@ def update_sale(request, id):
     sale_date = sale.date.strftime("%Y-%m-%d")
 
     if request.method == "GET":
-        return render(request, "sales/update_sales.html", {
-            "sale": sale,
-            "market_obj": market_obj,
-            "sale_date": sale_date,
-        })
+        return render(
+            request,
+            "sales/update_sales.html",
+            {
+                "sale": sale,
+                "market_obj": market_obj,
+                "sale_date": sale_date,
+            },
+        )
 
     market_id = request.POST.get("market")
     new_sale_date = request.POST.get("date")
@@ -1703,17 +1785,17 @@ def update_sale(request, id):
     sale.date = new_sale_date
     sale.save()
 
-    sale_product_ids = models.SaleProduct.objects.filter(
-        sale_id=sale
-    ).values_list("sale_product_id", flat=True)
+    sale_product_ids = models.SaleProduct.objects.filter(sale_id=sale).values_list(
+        "sale_product_id", flat=True
+    )
     models.Transaction.objects.filter(
         reference_type__in=["Production", "SaleProduct"],
         reference_id__in=sale_product_ids,
     ).update(date=new_sale_date)
 
-    sale_commodity_ids = models.SaleCommodity.objects.filter(
-        sale_id=sale
-    ).values_list("sale_commodity_id", flat=True)
+    sale_commodity_ids = models.SaleCommodity.objects.filter(sale_id=sale).values_list(
+        "sale_commodity_id", flat=True
+    )
     models.Transaction.objects.filter(
         reference_type="SaleCommodity",
         reference_id__in=sale_commodity_ids,
@@ -1725,11 +1807,12 @@ def update_sale(request, id):
         description=(
             f"Updated sale ID {sale.sale_id}: {old_market}, {old_date} -> "
             f"{market}, {new_sale_date}."
-        )
+        ),
     )
 
     messages.success(request, "Sale successfully updated!")
     return redirect("read_sale")
+
 
 @login_required(login_url="login")
 @role_required(["owner"])
@@ -1751,7 +1834,7 @@ def delete_sale(request, id):
     if completed_production:
         messages.error(
             request,
-            "Cannot delete: this sale has a production that has already been completed."
+            "Cannot delete: this sale has a production that has already been completed.",
         )
         return redirect("read_sale")
 
@@ -1776,7 +1859,9 @@ def delete_sale(request, id):
             production = production_detail.production_id
             production_detail.delete()
 
-            if not models.ProductionDetail.objects.filter(production_id=production).exists():
+            if not models.ProductionDetail.objects.filter(
+                production_id=production
+            ).exists():
                 production.delete()
 
     for sale_commodity in sale_commodities:
@@ -1793,7 +1878,7 @@ def delete_sale(request, id):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Delete Sale",
-        description=f"Deleted sale for {market} on {sale_date}."
+        description=f"Deleted sale for {market} on {sale_date}.",
     )
 
     messages.success(request, "Sale successfully deleted!")
@@ -1818,8 +1903,7 @@ def update_sale_product(request, id):
 
     if production_detail and production_detail.status == "Completed":
         messages.error(
-            request,
-            "Cannot update: the related production has already been completed."
+            request, "Cannot update: the related production has already been completed."
         )
         return redirect("read_sale")
 
@@ -1828,12 +1912,16 @@ def update_sale_product(request, id):
     sale_date = detail.sale_id.date.strftime("%Y-%m-%d")
 
     if request.method == "GET":
-        return render(request, "sales/update_sale_product.html", {
-            "detail": detail,
-            "market_obj": market_obj,
-            "product_obj": product_obj,
-            "sale_date": sale_date,
-        })
+        return render(
+            request,
+            "sales/update_sale_product.html",
+            {
+                "detail": detail,
+                "market_obj": market_obj,
+                "product_obj": product_obj,
+                "sale_date": sale_date,
+            },
+        )
 
     market_id = request.POST.get("market")
     new_sale_date = request.POST.get("date")
@@ -1875,7 +1963,7 @@ def update_sale_product(request, id):
         if stock < new_qty:
             messages.error(
                 request,
-                f"Not enough stock for {product.product_name}: only {stock} kg available."
+                f"Not enough stock for {product.product_name}: only {stock} kg available.",
             )
             return redirect("update_sale_product", id=id)
 
@@ -1892,12 +1980,13 @@ def update_sale_product(request, id):
             stock = models.InventoryBatch.objects.filter(
                 commodity_id=commodity,
                 remaining_quantity__gt=0,
-                expired_date__gte=today,).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
+                expired_date__gte=today,
+            ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
 
             if stock < delta:
                 messages.error(
                     request,
-                    f"Not enough additional stock for {product.product_name}: only {stock} kg available."
+                    f"Not enough additional stock for {product.product_name}: only {stock} kg available.",
                 )
                 return redirect("update_sale_product", id=id)
 
@@ -1923,12 +2012,10 @@ def update_sale_product(request, id):
         production_detail.production_id.save()
 
     production_cost_category, _ = models.TransactionCategory.objects.get_or_create(
-        category_name="Production Cost",
-        defaults={"type": "Expense"}
+        category_name="Production Cost", defaults={"type": "Expense"}
     )
     product_sale_category, _ = models.TransactionCategory.objects.get_or_create(
-        category_name="Product Sale",
-        defaults={"type": "Income"}
+        category_name="Product Sale", defaults={"type": "Income"}
     )
     models.Transaction.objects.update_or_create(
         reference_type="Production",
@@ -1938,7 +2025,7 @@ def update_sale_product(request, id):
             "date": new_sale_date,
             "description": f"Production cost for {product.product_name} x {quantity}",
             "amount": product.production_cost * quantity,
-        }
+        },
     )
     models.Transaction.objects.update_or_create(
         reference_type="SaleProduct",
@@ -1948,7 +2035,7 @@ def update_sale_product(request, id):
             "date": new_sale_date,
             "description": f"Product sale for {product.product_name} x {quantity}",
             "amount": product.selling_price * quantity,
-        }
+        },
     )
 
     models.ActivityLog.objects.create(
@@ -1958,7 +2045,7 @@ def update_sale_product(request, id):
             f"Updated sale product detail ID {detail.sale_product_id}: "
             f"{old_market}, {old_date}, {old_product}, {old_quantity} -> "
             f"{market}, {new_sale_date}, {product}, {quantity}."
-        )
+        ),
     )
 
     messages.success(request, "Sale Product successfully updated!")
@@ -1983,8 +2070,7 @@ def delete_sale_product(request, id):
 
     if production_detail and production_detail.status == "Completed":
         messages.error(
-            request,
-            "Cannot delete: the related production has already been completed."
+            request, "Cannot delete: the related production has already been completed."
         )
         return redirect("read_sale")
 
@@ -2010,7 +2096,9 @@ def delete_sale_product(request, id):
         production = production_detail.production_id
         production_detail.delete()
 
-        if not models.ProductionDetail.objects.filter(production_id=production).exists():
+        if not models.ProductionDetail.objects.filter(
+            production_id=production
+        ).exists():
             production.delete()
 
     detail.delete()
@@ -2022,7 +2110,7 @@ def delete_sale_product(request, id):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Delete Sale Product",
-        description=f"Deleted sale product detail: {market}, {sale_date}, {product}, {quantity}."
+        description=f"Deleted sale product detail: {market}, {sale_date}, {product}, {quantity}.",
     )
 
     messages.success(request, "Sale Product successfully deleted!")
@@ -2047,12 +2135,16 @@ def update_sale_commodity(request, id):
     sale_date = detail.sale_id.date.strftime("%Y-%m-%d")
 
     if request.method == "GET":
-        return render(request, "sales/update_sale_commodity.html", {
-            "detail": detail,
-            "market_obj": market_obj,
-            "commodity_obj": commodity_obj,
-            "sale_date": sale_date,
-        })
+        return render(
+            request,
+            "sales/update_sale_commodity.html",
+            {
+                "detail": detail,
+                "market_obj": market_obj,
+                "commodity_obj": commodity_obj,
+                "sale_date": sale_date,
+            },
+        )
 
     market_id = request.POST.get("market")
     new_sale_date = request.POST.get("date")
@@ -2081,19 +2173,15 @@ def update_sale_commodity(request, id):
     today = datetime.now().date()
 
     if commodity.commodity_id != old_commodity.commodity_id:
-        stock = (
-            models.InventoryBatch.objects.filter(
-                commodity_id=commodity,
-                remaining_quantity__gt=0,
-                expired_date__gte=today,
-            ).aggregate(total=Sum("remaining_quantity"))["total"]
-            or Decimal("0")
-        )
+        stock = models.InventoryBatch.objects.filter(
+            commodity_id=commodity,
+            remaining_quantity__gt=0,
+            expired_date__gte=today,
+        ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
 
         if stock < quantity:
             messages.error(
-                request,
-                f"Not enough stock for {commodity}: only {stock} kg available."
+                request, f"Not enough stock for {commodity}: only {stock} kg available."
             )
             return redirect("update_sale_commodity", id=id)
 
@@ -2103,23 +2191,20 @@ def update_sale_commodity(request, id):
             quantity,
             sale_commodity=detail,
         )
-    
+
     elif quantity != old_quantity:
         if quantity > old_quantity:
             delta = quantity - old_quantity
-            stock = (
-                models.InventoryBatch.objects.filter(
-                    commodity_id=commodity,
-                    remaining_quantity__gt=0,
-                    expired_date__gte=today,
-                ).aggregate(total=Sum("remaining_quantity"))["total"]
-                or Decimal("0")
-            )
+            stock = models.InventoryBatch.objects.filter(
+                commodity_id=commodity,
+                remaining_quantity__gt=0,
+                expired_date__gte=today,
+            ).aggregate(total=Sum("remaining_quantity"))["total"] or Decimal("0")
 
             if stock < delta:
                 messages.error(
                     request,
-                    f"Not enough additional stock for {commodity}: only {stock} kg available."
+                    f"Not enough additional stock for {commodity}: only {stock} kg available.",
                 )
                 return redirect("update_sale_commodity", id=id)
 
@@ -2147,9 +2232,9 @@ def update_sale_commodity(request, id):
     detail.save()
 
     commodity_sale_category, _ = models.TransactionCategory.objects.get_or_create(
-        category_name="Commodity Sale",
-        defaults={"type": "Income"}
+        category_name="Commodity Sale", defaults={"type": "Income"}
     )
+
     models.Transaction.objects.update_or_create(
         reference_type="SaleCommodity",
         reference_id=detail.sale_commodity_id,
@@ -2158,11 +2243,11 @@ def update_sale_commodity(request, id):
             "date": new_sale_date,
             "description": f"Commodity sale for {commodity} x {quantity} kg",
             "amount": int(
-                (
-                    Decimal(quantity) * Decimal(commodity.selling_price)
-                ).quantize(Decimal("1"), rounding=ROUND_HALF_UP)
+                (Decimal(quantity) * Decimal(commodity.selling_price)).quantize(
+                    Decimal("1"), rounding=ROUND_HALF_UP
+                )
             ),
-        }
+        },
     )
 
     models.ActivityLog.objects.create(
@@ -2172,7 +2257,7 @@ def update_sale_commodity(request, id):
             f"Updated sale commodity detail ID {detail.sale_commodity_id}: "
             f"{old_market}, {old_date}, {old_commodity}, {old_quantity} kg -> "
             f"{market}, {new_sale_date}, {commodity}, {quantity} kg."
-        )
+        ),
     )
 
     messages.success(request, "Sale Commodity successfully updated!")
@@ -2213,11 +2298,12 @@ def delete_sale_commodity(request, id):
     models.ActivityLog.objects.create(
         user=request.user,
         action="Delete Sale Commodity",
-        description=f"Deleted sale commodity detail: {market}, {sale_date}, {commodity}, {quantity} kg."
+        description=f"Deleted sale commodity detail: {market}, {sale_date}, {commodity}, {quantity} kg.",
     )
 
     messages.success(request, "Sale Commodity successfully deleted!")
     return redirect("read_sale")
+
 
 @login_required(login_url="login")
 @role_required(["owner", "admin", "production"])
@@ -2232,21 +2318,30 @@ def read_production(request):
     production_rows = []
 
     for detail in production_details:
-        required_quantity = detail.product_id.commodity_quantity * Decimal(detail.product_quantity)
+        required_quantity = detail.product_id.commodity_quantity * Decimal(
+            detail.product_quantity
+        )
         total_cost = detail.product_id.production_cost * detail.product_quantity
 
-        production_rows.append({
-            "detail": detail,
-            "required_quantity": required_quantity,
-            "total_cost": total_cost,
-        })
+        production_rows.append(
+            {
+                "detail": detail,
+                "required_quantity": required_quantity,
+                "total_cost": total_cost,
+            }
+        )
 
     if not production_rows:
         messages.error(request, "No Production data found!")
 
-    return render(request, "production/read_production.html", {
-        "production_rows": production_rows,
-    })
+    return render(
+        request,
+        "production/read_production.html",
+        {
+            "production_rows": production_rows,
+        },
+    )
+
 
 @login_required(login_url="login")
 @role_required(["owner", "admin", "production"])
@@ -2263,10 +2358,14 @@ def update_production(request, id):
     status_choices = [choice[0] for choice in models.PRODUCTION_STATUS_CHOICES]
 
     if request.method == "GET":
-        return render(request, "production/update_production.html", {
-            "detail": detail,
-            "status_choices": status_choices,
-        })
+        return render(
+            request,
+            "production/update_production.html",
+            {
+                "detail": detail,
+                "status_choices": status_choices,
+            },
+        )
 
     status = request.POST.get("status")
 
@@ -2288,7 +2387,7 @@ def update_production(request, id):
         description=(
             f"Updated production detail ID {detail.production_detail_id}: "
             f"status {old_status} -> {status}."
-        )
+        ),
     )
 
     messages.success(request, "Production status successfully updated!")
@@ -2303,7 +2402,9 @@ def sales_report(request):
     start_date = parse_date_filter(start)
     end_date = parse_date_filter(end)
 
-    sales = models.Sale.objects.select_related("market_id").order_by("-date", "-sale_id")
+    sales = models.Sale.objects.select_related("market_id").order_by(
+        "-date", "-sale_id"
+    )
     if start_date:
         sales = sales.filter(date__gte=start_date)
     if end_date:
@@ -2320,9 +2421,7 @@ def sales_report(request):
             ).filter(sale_id=sale)
         )
         product_details = list(
-            models.SaleProduct.objects.select_related("product_id").filter(
-                sale_id=sale
-            )
+            models.SaleProduct.objects.select_related("product_id").filter(sale_id=sale)
         )
         details = commodity_details + product_details
         subtotals = []
@@ -2342,12 +2441,16 @@ def sales_report(request):
             detail_sales_list.append((sale, details, subtotals, sale_total))
             grand_total += sale_total
 
-    return render(request, "report/sales_report.html", {
-        "start": start,
-        "end": end,
-        "detail_sales_list": detail_sales_list,
-        "grand_total": grand_total,
-    })
+    return render(
+        request,
+        "report/sales_report.html",
+        {
+            "start": start,
+            "end": end,
+            "detail_sales_list": detail_sales_list,
+            "grand_total": grand_total,
+        },
+    )
 
 
 @login_required(login_url="login")
@@ -2435,15 +2538,19 @@ def harvest_report(request):
                 detail_local.append((harvest, details, subtotals, total))
                 grand_total_local += total
 
-    return render(request, "report/harvest_report.html", {
-        "mulai": mulai,
-        "akhir": akhir,
-        "harvest_type": harvest_type,
-        "detail_partner": detail_partner,
-        "detail_local": detail_local,
-        "grand_total": grand_total,
-        "grand_total_local": grand_total_local,
-    })
+    return render(
+        request,
+        "report/harvest_report.html",
+        {
+            "mulai": mulai,
+            "akhir": akhir,
+            "harvest_type": harvest_type,
+            "detail_partner": detail_partner,
+            "detail_local": detail_local,
+            "grand_total": grand_total,
+            "grand_total_local": grand_total_local,
+        },
+    )
 
 
 @login_required(login_url="login")
@@ -2477,43 +2584,52 @@ def total_commodities(request):
         if commodity_label not in commodity_list:
             commodity_list.append(commodity_label)
 
-        total_list.append(SimpleNamespace(
-            commodity=commodity_label,
-            grade=batch.commodity_id.grade_id.grade_name,
-            harvest_date=batch.harvest_date,
-            batch=batch.inventory_batch_id,
-            expiry_date=batch.expired_date,
-            total_quantity=batch.remaining_quantity,
-        ))
+        total_list.append(
+            SimpleNamespace(
+                commodity=commodity_label,
+                grade=batch.commodity_id.grade_id.grade_name,
+                harvest_date=batch.harvest_date,
+                batch=batch.inventory_batch_id,
+                expiry_date=batch.expired_date,
+                total_quantity=batch.remaining_quantity,
+            )
+        )
 
-    return render(request, "total_commodities.html", {
-        "total_list": total_list,
-        "commodity_list": commodity_list,
-    })
+    return render(
+        request,
+        "total_commodities.html",
+        {
+            "total_list": total_list,
+            "commodity_list": commodity_list,
+        },
+    )
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def read_transactioncategory(request):
     category_obj = models.TransactionCategory.objects.all()
     if not category_obj.exists():
         messages.error(request, "No Transaction category data found!")
 
-    return render(request, 'transaction/read_transactioncategory.html', {
-        'category_obj': category_obj
-    })
+    return render(
+        request,
+        "transaction/read_transactioncategory.html",
+        {"category_obj": category_obj},
+    )
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def create_transactioncategory(request):
     if request.method == "GET":
-        return render(request, 'transaction/create_transactioncategory.html')
+        return render(request, "transaction/create_transactioncategory.html")
 
-    category_name = request.POST['category_name']
-    category_type = request.POST['type']
+    category_name = request.POST["category_name"]
+    category_type = request.POST["type"]
 
     category_obj = models.TransactionCategory.objects.filter(
-        category_name=category_name,
-        type=category_type
+        category_name=category_name, type=category_type
     )
 
     if category_obj.exists():
@@ -2529,43 +2645,45 @@ def create_transactioncategory(request):
     models.ActivityLog(
         user=request.user,
         action="Add Transaction Category",
-        description=f"Added new transaction category: {data.category_name} ({data.type})."
+        description=f"Added new transaction category: {data.category_name} ({data.type}).",
     ).save()
 
     messages.success(request, "Transaction Category successfully added!")
     return redirect("read_transactioncategory")
 
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def update_transactioncategory(request, id):
     try:
         category = models.TransactionCategory.objects.get(category_id=id)
     except models.TransactionCategory.DoesNotExist:
         messages.error(request, "Transaction Category not found!")
-        return redirect('read_transactioncategory')
+        return redirect("read_transactioncategory")
 
-    if request.method == 'GET':
-        return render(request, 'transaction/update_transactioncategory.html', {
-            'category': category,
-            'id': id,
-        })
+    if request.method == "GET":
+        return render(
+            request,
+            "transaction/update_transactioncategory.html",
+            {
+                "category": category,
+                "id": id,
+            },
+        )
 
     else:
-        new_category_name = request.POST['category_name']
-        new_type = request.POST['type']
+        new_category_name = request.POST["category_name"]
+        new_type = request.POST["type"]
 
         category_obj = models.TransactionCategory.objects.filter(
-            category_name=new_category_name,
-            type=new_type
+            category_name=new_category_name, type=new_type
         )
 
         if category_obj.exists() and (
-            category.category_name != new_category_name
-            or category.type != new_type
+            category.category_name != new_category_name or category.type != new_type
         ):
             messages.error(request, "Transaction Category already exists!")
-            return redirect('update_transactioncategory', id)
+            return redirect("update_transactioncategory", id)
 
         old_name = category.category_name
         old_type = category.type
@@ -2581,20 +2699,21 @@ def update_transactioncategory(request, id):
                 f"Updated transaction category ID {category.category_id}:\n"
                 f"From: {old_name} ({old_type})\n"
                 f"To: {category.category_name} ({category.type})"
-            )
+            ),
         ).save()
 
         messages.success(request, "Transaction Category has been successfully updated!")
-        return redirect('read_transactioncategory')
+        return redirect("read_transactioncategory")
 
-@login_required(login_url='login')
-@role_required(['owner'])
+
+@login_required(login_url="login")
+@role_required(["owner"])
 def delete_transactioncategory(request, id):
     try:
         category = models.TransactionCategory.objects.get(category_id=id)
     except models.TransactionCategory.DoesNotExist:
         messages.error(request, "Transaction Category not found!")
-        return redirect('read_transactioncategory')
+        return redirect("read_transactioncategory")
 
     category_name = category.category_name
     category_type = category.type
@@ -2604,38 +2723,42 @@ def delete_transactioncategory(request, id):
         action="Delete Transaction Category",
         description=(
             f"Deleted transaction category: {category_name} ({category_type})."
-        )
+        ),
     ).save()
 
     category.delete()
     messages.success(request, "Transaction Category has been successfully deleted!")
-    return redirect('read_transactioncategory')
+    return redirect("read_transactioncategory")
 
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def read_transaction(request):
-    transaction_obj = models.Transaction.objects.select_related(
-        "category_id"
-    ).order_by("-date", "-transaction_id")
+    transaction_obj = models.Transaction.objects.select_related("category_id").order_by(
+        "-date", "-transaction_id"
+    )
 
     if not transaction_obj.exists():
         messages.error(request, "No Transaction data found!")
 
-    return render(request, 'transaction/read_transaction.html', {
-        'transaction_obj': transaction_obj
-    })
+    return render(
+        request,
+        "transaction/read_transaction.html",
+        {"transaction_obj": transaction_obj},
+    )
 
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def create_transaction(request):
     category_obj = models.TransactionCategory.objects.all().order_by("category_name")
 
     if request.method == "GET":
-        return render(request, 'transaction/create_transaction.html', {
-            'category_obj': category_obj
-        })
+        return render(
+            request,
+            "transaction/create_transaction.html",
+            {"category_obj": category_obj},
+        )
 
     category_id = request.POST.get("category")
     date = request.POST.get("date")
@@ -2672,15 +2795,15 @@ def create_transaction(request):
         description=(
             f"Added manual transaction ID {transaction.transaction_id}: "
             f"{category.category_name}, {date}, Rp{amount}."
-        )
+        ),
     )
 
     messages.success(request, "Transaction successfully added!")
     return redirect("read_transaction")
 
 
-@login_required(login_url='login')
-@role_required(['owner', 'admin'])
+@login_required(login_url="login")
+@role_required(["owner", "admin"])
 def update_transaction(request, id):
     try:
         transaction = models.Transaction.objects.select_related("category_id").get(
@@ -2697,11 +2820,15 @@ def update_transaction(request, id):
     category_obj = models.TransactionCategory.objects.all().order_by("category_name")
 
     if request.method == "GET":
-        return render(request, 'transaction/update_transaction.html', {
-            'transaction': transaction,
-            'category_obj': category_obj,
-            'transaction_date': transaction.date.strftime("%Y-%m-%d"),
-        })
+        return render(
+            request,
+            "transaction/update_transaction.html",
+            {
+                "transaction": transaction,
+                "category_obj": category_obj,
+                "transaction_date": transaction.date.strftime("%Y-%m-%d"),
+            },
+        )
 
     category_id = request.POST.get("category")
     date = request.POST.get("date")
@@ -2740,15 +2867,15 @@ def update_transaction(request, id):
             f"Updated manual transaction ID {transaction.transaction_id}: "
             f"{old_category}, {old_date}, Rp{old_amount} -> "
             f"{category}, {date}, Rp{amount}."
-        )
+        ),
     )
 
     messages.success(request, "Transaction successfully updated!")
     return redirect("read_transaction")
 
 
-@login_required(login_url='login')
-@role_required(['owner'])
+@login_required(login_url="login")
+@role_required(["owner"])
 def delete_transaction(request, id):
     try:
         transaction = models.Transaction.objects.select_related("category_id").get(
@@ -2766,7 +2893,6 @@ def delete_transaction(request, id):
     date = transaction.date
     amount = transaction.amount
     transaction_id = transaction.transaction_id
-
     transaction.delete()
 
     models.ActivityLog.objects.create(
@@ -2775,20 +2901,22 @@ def delete_transaction(request, id):
         description=(
             f"Deleted manual transaction ID {transaction_id}: "
             f"{category}, {date}, Rp{amount}."
-        )
+        ),
     )
 
     messages.success(request, "Transaction successfully deleted!")
     return redirect("read_transaction")
 
+
 @login_required(login_url="login")
-@role_required(["owner", "admin"]) 
+@role_required(["owner", "admin"])
 def activity_logs(request):
-    logs = models.ActivityLog.objects.all().order_by('-timestamp') 
-    return render(request, 'log/activity_log.html', {'logs': logs})
+    logs = models.ActivityLog.objects.all().order_by("-timestamp")
+    return render(request, "log/activity_log.html", {"logs": logs})
+
 
 @login_required
-@role_required(['owner'])  
+@role_required(["owner"])
 def delete_log(request, id):
     try:
         log = models.ActivityLog.objects.get(id=id)
@@ -2796,6 +2924,4 @@ def delete_log(request, id):
         messages.success(request, "Log berhasil dihapus.")
     except models.ActivityLog.DoesNotExist:
         messages.error(request, "Log tidak ditemukan.")
-    return redirect('activity_logs') 
-
-
+    return redirect("activity_logs")

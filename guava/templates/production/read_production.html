@@ -1,7 +1,6 @@
 {% extends "base/base.html" %}
 
 {% block content %}
-
 <div class="page-header">
     <h1 class="page-title">Data Production</h1>
     <nav aria-label="breadcrumb">
@@ -47,7 +46,6 @@
                                 <td>{{ row.detail.status }}</td>
                                 <td class="text-right">Rp{{ row.detail.product_id.production_cost }}</td>
                                 <td class="text-right">Rp{{ row.total_cost }}</td>
-
                                 {% if is_owner or is_admin or is_production %}
                                 <td>
                                     <a href="{% url 'update_production' row.detail.production_detail_id %}">
@@ -72,5 +70,4 @@
         </div>
     </div>
 </div>
-    
 {% endblock %}
