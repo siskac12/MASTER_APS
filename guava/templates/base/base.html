@@ -64,58 +64,7 @@
   <!-- endinject -->
   <!-- Custom js untuk halaman ini -->
   <script src="{% static 'assets/js/dashboard.js' %}"></script>
-  <script>
-    $(document).ready(function () {
-      $('#datapartner').DataTable();
-    });
-    
-    $(document).ready(function() {
-      $('#tabel').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#datacosttype').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#datapartner_harvest').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#localharvestdata').DataTable();
-    });
-
-    $(document).ready(function () {
-      var invTable = $('#datainventory').DataTable();
-      $('#sourceFilter').on('change', function () {
-        invTable.column(7).search(this.value).draw();
-      });
-    });
-
-    $(document).ready(function () {
-      $('#dataproduction').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#datadetailcost').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#partnerreport').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#localreport').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#gradedata').DataTable();
-    });
-
-    $(document).ready(function () {
-      $('#datatotal').DataTable();
-    });
-  </script>
+  
   <!-- End custom js untuk halaman ini -->
   
 </body>
